@@ -7,30 +7,331 @@
     <title>P2P文件快传</title>
     <!-- 添加FileSaver.js库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- 添加 Material Icons 和 Roboto 字体 -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <!-- 引入必要的库 -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        /* 基本样式 */
+        /* Material Design Variables */
+        :root {
+            --primary-color: #0071e3;
+            --primary-dark: #0077ED;
+            --primary-light: #E8F2FF;
+            --accent-color: #2E2E2E;
+            --accent-dark: #1D1D1F;
+            --error-color: #FF3B30;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --background: #FBFBFD;
+            --surface: #FFFFFF;
+            --border-color: #D2D2D7;
+            --elevation-1: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --elevation-2: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --elevation-3: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 12px;
+            --spacing: 20px;
+        }
+
+        /* Base Styles */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            line-height: 1.5;
+            color: var(--text-primary);
+            max-width: 980px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
+            padding: var(--spacing);
+            background-color: var(--background);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         h1,
         h2,
         h3 {
-            color: #2c3e50;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            font-weight: 600;
+            letter-spacing: -0.015em;
         }
 
         h1 {
+            font-size: 48px;
             text-align: center;
-            margin-bottom: 30px;
-            color: #3498db;
+            margin-bottom: calc(var(--spacing) * 2);
+            line-height: 1.1;
         }
 
+        h2 {
+            font-size: 28px;
+            margin-bottom: var(--spacing);
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 17px;
+            line-height: 1.5;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing) * 2);
+            margin-bottom: calc(var(--spacing) * 2);
+            box-shadow: var(--elevation-1);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--elevation-2);
+        }
+
+        /* Button Styles */
+        button,
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 980px;
+            padding: 12px 24px;
+            font-size: 17px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            position: relative;
+            overflow: hidden;
+            text-transform: none;
+        }
+
+        button:hover,
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        button:active,
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        #btn-send-mode,
+        #btn-receive-mode {
+            width: 100%;
+            margin: 8px 0;
+            padding: 16px 32px;
+            font-size: 17px;
+            font-weight: 400;
+        }
+
+        /* Input Styles */
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 17px;
+            background: var(--surface);
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--primary-light);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            margin: 8px 0;
+            font-weight: 400;
+            font-size: 15px;
+        }
+
+        .connected {
+            background-color: #F5FFF7;
+            color: #1D1D1F;
+            border: 1px solid #34C759;
+        }
+
+        .disconnected {
+            background-color: #FFF5F5;
+            color: #1D1D1F;
+            border: 1px solid var(--error-color);
+        }
+
+        .error {
+            background-color: #FFF5F5;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.3;
+            z-index: 1000;
+            animation: fadeInOut 3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            10% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            90% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* 添加图标支持 */
+        .toast::before {
+            content: 'info';
+            font-family: 'Material Icons';
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* File Info Box */
+        .info-box {
+            background-color: var(--primary-light);
+            border-left: none;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Download Box */
+        .download-box {
+            background-color: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin: 16px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .file-details {
+            margin-bottom: 16px;
+        }
+
+        .file-details p {
+            margin: 8px 0;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Debug Box */
+        .debug-box {
+            background-color: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin: 16px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+        }
+
+        .debug-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            body {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            button,
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 基本样式 */
         .section {
             background: white;
             border-radius: 8px;
@@ -266,47 +567,285 @@
             display: none !important;
         }
 
-        /* Toast 提示样式 */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 4px;
-            z-index: 1000;
-            animation: fadeInOut 3s ease;
-            pointer-events: none;
-        }
-
-        @keyframes fadeInOut {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            10% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            90% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-
         /* 添加图标支持 */
         .btn i {
             margin-right: 8px;
             font-size: 18px;
         }
+
+        /* Upload Container Styles */
+        .upload-container {
+            margin: 20px 0;
+        }
+
+        .upload-area {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--surface);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 113, 227, 0.02);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 113, 227, 0.05);
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .upload-icon {
+            margin-bottom: 16px;
+            color: var(--primary-color);
+        }
+
+        .upload-text {
+            font-size: 17px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* File Preview Styles */
+        .file-preview {
+            margin-top: 20px;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            background: rgba(0, 113, 227, 0.1);
+            border-radius: 8px;
+            margin-right: 16px;
+        }
+
+        .preview-info {
+            flex: 1;
+        }
+
+        .preview-info h3 {
+            font-size: 15px;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .preview-info p {
+            font-size: 13px;
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .preview-remove {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .preview-remove:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--error-color);
+        }
+
+        .preview-content {
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.02);
+            min-height: 200px;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+        }
+
+        /* Connection Info Styles */
+        .connection-status {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: rgba(0, 113, 227, 0.05);
+            border-radius: var(--border-radius);
+        }
+
+        .status-icon {
+            color: var(--primary-color);
+            margin-right: 16px;
+            margin-top: 4px;
+        }
+
+        .status-text h3 {
+            margin: 0 0 8px 0;
+            font-size: 17px;
+            color: var(--text-primary);
+        }
+
+        .status-text p {
+            margin: 0;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0;
+            padding: 24px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--elevation-1);
+        }
+
+        .qr-code {
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .connection-id {
+            margin-top: 24px;
+        }
+
+        .id-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .copy-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(0, 113, 227, 0.1);
+        }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-top: 24px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 113, 227, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-inner {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Status Message Styles */
+        .status-message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            font-size: 15px;
+            background: rgba(0, 113, 227, 0.05);
+            color: var(--text-primary);
+        }
+
+        .status-message.error {
+            background: rgba(255, 59, 48, 0.05);
+            color: var(--error-color);
+        }
+
+        /* Animation for file preview */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-preview {
+            animation: slideDown 0.3s ease;
+        }
+
+        /* ... existing code ... */
     </style>
 </head>
 
@@ -322,1588 +861,576 @@
 
     <div class="card hidden" id="send-panel">
         <h2>发送文件</h2>
-        <p>选择要发送的文件 (最大100MB):</p>
-        <input type="file" id="file-input">
-        <div id="file-info"></div>
-        <button id="create-link" disabled>创建连接</button>
+        <!-- 文件上传区域 -->
+        <div class="upload-container">
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" class="file-input">
+                <div class="upload-content">
+                    <div class="upload-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4L12 16M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M4 16L4 17C4 18.6569 5.34315 20 7 20L17 20C18.6569 20 20 18.6569 20 17L20 16"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <p class="upload-text">拖放文件到这里或点击选择</p>
+                    <p class="upload-hint">最大支持 100MB</p>
+                </div>
+            </div>
 
-        <!-- 添加服务器选择 -->
-        <div id="server-selection">
-            <p>服务器选择:</p>
-            <select id="server-selector">
-                <option value="default">默认服务器</option>
-                <option value="0.peerjs.com">备用服务器 (0.peerjs.com)</option>
-                <option value="custom">自定义服务器</option>
-            </select>
-            <div id="custom-server-config" style="display: none; margin-top: 10px;">
-                <input type="text" id="custom-host" placeholder="服务器地址" value="0.peerjs.com">
-                <input type="number" id="custom-port" placeholder="端口" value="443" style="width: 80px;">
-                <label><input type="checkbox" id="custom-secure" checked> 安全连接 (HTTPS)</label>
+            <!-- 文件预览区域 -->
+            <div class="file-preview hidden" id="file-preview">
+                <div class="preview-header">
+                    <div class="preview-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="preview-info">
+                        <h3 id="preview-filename">文件名称</h3>
+                        <p id="preview-filesize">文件大小</p>
+                    </div>
+                    <button class="preview-remove" id="remove-file">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="preview-content">
+                    <img id="preview-image" class="hidden" alt="文件预览">
+                    <div id="preview-icon" class="hidden"></div>
+                </div>
             </div>
         </div>
 
         <div id="connection-info" class="hidden">
-            <p>请让接收方扫描以下QR码或输入连接ID:</p>
-            <div id="qrcode"></div>
-            <p>连接ID: <span id="peer-id-display"></span></p>
-            <button id="copy-id">复制ID</button>
+            <div class="connection-status">
+                <div class="status-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                            stroke="currentColor" stroke-width="2" />
+                        <path d="M12 16L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <path d="M12 8L12 8.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="status-text">
+                    <h3>连接信息</h3>
+                    <p>请让接收方输入以下连接ID</p>
+                </div>
+            </div>
+
+            <div class="connection-id">
+                <div class="id-display">
+                    <span id="peer-id"></span>
+                    <button class="copy-button" id="copy-id">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path
+                                d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        复制ID
+                    </button>
+                </div>
+            </div>
         </div>
-        <div id="connection-status"></div>
-        <div id="transfer-status" class="hidden">
-            <h3>传输进度</h3>
-            <progress id="send-progress" value="0" max="100"></progress>
-            <div id="send-status"></div>
+
+        <div class="progress-container hidden">
+            <div class="progress-bar">
+                <div class="progress-inner" style="width: 0%"></div>
+            </div>
+            <p class="progress-text">准备发送...</p>
         </div>
     </div>
 
     <div class="card hidden" id="receive-panel">
         <h2>接收文件</h2>
-
-        <!-- 添加服务器选择 -->
-        <div id="receiver-server-selection">
-            <p>服务器选择:</p>
-            <select id="receiver-server-selector">
-                <option value="default">默认服务器</option>
-                <option value="0.peerjs.com">备用服务器 (0.peerjs.com)</option>
-                <option value="custom">自定义服务器</option>
-            </select>
-            <div id="receiver-custom-server-config" style="display: none; margin-top: 10px;">
-                <input type="text" id="receiver-custom-host" placeholder="服务器地址" value="0.peerjs.com">
-                <input type="number" id="receiver-custom-port" placeholder="端口" value="443" style="width: 80px;">
-                <label><input type="checkbox" id="receiver-custom-secure" checked> 安全连接 (HTTPS)</label>
-            </div>
+        <div class="connection-form">
+            <input type="text" id="connection-id-input" placeholder="输入连接ID">
+            <button id="connect-button">连接</button>
         </div>
 
-        <div id="qr-scanner">
-            <button id="scan-qr">扫描QR码</button>
-            <video id="video-preview" class="hidden"></video>
-            <canvas id="canvas"></canvas>
-        </div>
-        <p>或输入连接ID:</p>
-        <input type="text" id="connection-id" placeholder="输入连接ID">
-        <button id="connect-button">连接</button>
-        <button id="retry-button" class="hidden">重试连接</button>
-        <div id="receiver-status"></div>
-        <div id="connection-debug-info" class="hidden">
-            <h3>连接信息</h3>
-            <pre id="debug-text"></pre>
-            <button id="toggle-debug">显示/隐藏详细信息</button>
-        </div>
-
-        <!-- 文件接收进度 -->
-        <div id="progress-container" style="display: none;">
-            <h3>接收进度</h3>
-            <div class="progress-bar-container">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-            <div id="progress-text" class="progress-text">0%</div>
-        </div>
-
-        <!-- 文件信息显示 -->
-        <div id="received-file-info" class="info-box" style="display: none;"></div>
-
-        <!-- 下载容器 -->
-        <div id="download-container" style="display: none;" class="download-box">
-            <h3>文件已接收</h3>
+        <div class="download-box hidden" id="file-info">
             <div class="file-details">
-                <p><strong>文件名:</strong> <span id="file-name"></span></p>
-                <p><strong>大小:</strong> <span id="file-size"></span></p>
-                <p><strong>类型:</strong> <span id="file-type"></span></p>
+                <h3>文件信息</h3>
+                <p id="incoming-filename">文件名：-</p>
+                <p id="incoming-filesize">文件大小：-</p>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-inner" style="width: 0%"></div>
+                </div>
+                <p class="progress-text">等待文件传输...</p>
             </div>
             <div class="download-buttons">
-                <a id="auto-download" href="#" download class="btn primary-btn" style="display: none;">自动下载</a>
-                <button id="manual-save" class="btn secondary-btn" style="display: none;">手动保存</button>
-                <button id="alt-save" class="btn secondary-btn" style="display: none;">替代保存方法</button>
-                <button id="force-complete" class="btn warning-btn">强制完成接收</button>
+                <button id="accept-file" class="primary-btn">接收文件</button>
+                <button id="reject-file" class="warning-btn">拒绝</button>
             </div>
         </div>
     </div>
 
-    <!-- 调试信息 -->
-    <div id="debug-container" class="section">
-        <h2>调试信息</h2>
-        <div id="debug-info" class="debug-box"></div>
-        <button id="clear-debug" class="btn secondary-btn">清除调试信息</button>
-    </div>
-
-    <!-- 引入必要的库 -->
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
     <script>
-        // 全局变量
-        let peer = null;
-        let conn = null;
-        let fileToSend = null;
-        let receivedChunks = [];
-        let receivedSize = 0;
-        let fileInfo = null;
-        let peerId = null;
-        let scanning = false;
-        let videoStream = null;
-        let downloadUrl = null;
-        let autoDetectTimer = null;
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mode selector functionality
+            const modeSelector = document.getElementById('mode-selector');
+            const sendPanel = document.getElementById('send-panel');
+            const receivePanel = document.getElementById('receive-panel');
+            const btnSendMode = document.getElementById('btn-send-mode');
+            const btnReceiveMode = document.getElementById('btn-receive-mode');
 
-        // DOM元素引用
-        const modeSelector = document.getElementById('mode-selector');
-        const sendPanel = document.getElementById('send-panel');
-        const receivePanel = document.getElementById('receive-panel');
-        const fileInput = document.getElementById('file-input');
-        const fileInfoDisplay = document.getElementById('file-info');
-        const createLinkBtn = document.getElementById('create-link');
-        const connectionInfo = document.getElementById('connection-info');
-        const peerIdDisplay = document.getElementById('peer-id-display');
-        const copyIdBtn = document.getElementById('copy-id');
-        const connectionStatus = document.getElementById('connection-status');
-        const transferStatus = document.getElementById('transfer-status');
-        const sendProgress = document.getElementById('send-progress');
-        const sendStatus = document.getElementById('send-status');
-        const scanQrBtn = document.getElementById('scan-qr');
-        const videoPreview = document.getElementById('video-preview');
-        const canvas = document.getElementById('canvas');
-        const connectionIdInput = document.getElementById('connection-id');
-        const connectButton = document.getElementById('connect-button');
-        const retryButton = document.getElementById('retry-button');
-        const receiverStatus = document.getElementById('receiver-status');
-        const connectionDebugInfo = document.getElementById('connection-debug-info');
-
-        // 服务器选择元素
-        const serverSelector = document.getElementById('server-selector');
-        const customServerConfigDiv = document.getElementById('custom-server-config');
-        const customHost = document.getElementById('custom-host');
-        const customPort = document.getElementById('custom-port');
-        const customSecure = document.getElementById('custom-secure');
-
-        const receiverServerSelector = document.getElementById('receiver-server-selector');
-        const receiverCustomServerConfig = document.getElementById('receiver-custom-server-config');
-        const receiverCustomHost = document.getElementById('receiver-custom-host');
-        const receiverCustomPort = document.getElementById('receiver-custom-port');
-        const receiverCustomSecure = document.getElementById('receiver-custom-secure');
-
-        // 新UI元素引用
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        const receivedFileInfo = document.getElementById('received-file-info');
-        const downloadContainer = document.getElementById('download-container');
-        const fileNameDisplay = document.getElementById('file-name');
-        const fileSizeDisplay = document.getElementById('file-size');
-        const fileTypeDisplay = document.getElementById('file-type');
-        const autoDownloadBtn = document.getElementById('auto-download');
-        const manualSaveBtn = document.getElementById('manual-save');
-        const altSaveBtn = document.getElementById('alt-save');
-        const forceCompleteBtn = document.getElementById('force-complete');
-
-        // 调试元素
-        const debugContainer = document.getElementById('debug-container');
-        const debugInfo = document.getElementById('debug-info');
-        const debugText = document.getElementById('debug-text');
-        const toggleDebug = document.getElementById('toggle-debug');
-        const clearDebugBtn = document.getElementById('clear-debug');
-
-        // 服务器选择处理
-        serverSelector.addEventListener('change', function () {
-            if (this.value === 'custom') {
-                customServerConfigDiv.style.display = 'block';
-            } else {
-                customServerConfigDiv.style.display = 'none';
-            }
-        });
-
-        receiverServerSelector.addEventListener('change', function () {
-            if (this.value === 'custom') {
-                receiverCustomServerConfig.style.display = 'block';
-            } else {
-                receiverCustomServerConfig.style.display = 'none';
-            }
-        });
-
-        // 获取当前选择的服务器配置
-        function getSelectedServerConfig(isSender = true) {
-            const selector = isSender ? serverSelector : receiverServerSelector;
-            const selectedValue = selector.value;
-
-            let config = {};
-
-            if (selectedValue === 'default') {
-                // 使用默认服务器，不添加额外配置
-                return config;
-            } else if (selectedValue === '0.peerjs.com') {
-                // 使用备用服务器
-                config.host = '0.peerjs.com';
-                config.secure = true;
-                config.port = 443;
-            } else if (selectedValue === 'custom') {
-                // 使用自定义服务器
-                const hostInput = isSender ? customHost : receiverCustomHost;
-                const portInput = isSender ? customPort : receiverCustomPort;
-                const secureInput = isSender ? customSecure : receiverCustomSecure;
-
-                config.host = hostInput.value.trim();
-                config.port = parseInt(portInput.value, 10);
-                config.secure = secureInput.checked;
-            }
-
-            return config;
-        }
-
-        // 初始化发送模式
-        document.getElementById('btn-send-mode').addEventListener('click', () => {
-            modeSelector.classList.add('hidden');
-            sendPanel.classList.remove('hidden');
-        });
-
-        // 初始化接收模式
-        document.getElementById('btn-receive-mode').addEventListener('click', () => {
-            modeSelector.classList.add('hidden');
-            receivePanel.classList.remove('hidden');
-
-            // 自动聚焦到输入框
-            setTimeout(() => {
-                connectionIdInput.focus();
-            }, 100);
-        });
-
-        // 文件选择处理
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.size > 100 * 1024 * 1024) {
-                showToast('文件大小超过100MB限制');
-                fileInput.value = '';
-                return;
-            }
-
-            fileToSend = file;
-            fileInfoDisplay.textContent = `文件: ${file.name} (${formatFileSize(file.size)})`;
-            createLinkBtn.disabled = false;
-
-            // 自动点击创建连接按钮
-            createLinkBtn.click();
-        });
-
-        // 创建连接
-        createLinkBtn.addEventListener('click', () => {
-            if (!fileToSend) return;
-
-            createLinkBtn.disabled = true;
-            connectionStatus.textContent = '正在初始化连接...';
-
-            // 初始化PeerJS
-            initSender();
-        });
-
-        // 复制连接ID
-        copyIdBtn.addEventListener('click', () => {
-            const idText = peerIdDisplay.textContent;
-            navigator.clipboard.writeText(idText).then(() => {
-                alert('连接ID已复制到剪贴板');
-            }).catch(err => {
-                console.error('复制失败:', err);
+            // 发送模式按钮点击事件
+            btnSendMode.addEventListener('click', function () {
+                console.log('Send mode button clicked');
+                modeSelector.classList.add('hidden');
+                sendPanel.classList.remove('hidden');
+                // 自动触发文件选择对话框
+                document.getElementById('file-input').click();
             });
-        });
 
-        // 初始化发送方
-        function initSender() {
-            // 尝试使用默认PeerJS服务器
-            initPeerConnection();
+            // 接收模式按钮点击事件
+            btnReceiveMode.addEventListener('click', function () {
+                console.log('Receive mode button clicked');
+                modeSelector.classList.add('hidden');
+                receivePanel.classList.remove('hidden');
+                // 自动聚焦到连接ID输入框
+                document.getElementById('connection-id-input')?.focus();
+            });
 
-            function initPeerConnection(useBackupServer = false) {
-                // 销毁之前的连接（如果有）
-                if (peer) {
-                    peer.destroy();
+            // File upload functionality
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const filePreview = document.getElementById('file-preview');
+            const previewImage = document.getElementById('preview-image');
+            const previewIcon = document.getElementById('preview-icon');
+            const previewFilename = document.getElementById('preview-filename');
+            const previewFilesize = document.getElementById('preview-filesize');
+            const removeFileBtn = document.getElementById('remove-file');
+            const connectionInfo = document.getElementById('connection-info');
+
+            // 处理文件拖放
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('drag-over');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('drag-over');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('drag-over');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            // 处理文件选择
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // 处理文件选择
+            function handleFileSelect(file) {
+                // 检查文件大小（100MB限制）
+                if (file.size > 100 * 1024 * 1024) {
+                    alert('文件大小不能超过100MB');
+                    return;
                 }
 
-                let peerConfig = {
-                    debug: 2,
-                    config: {
-                        'iceServers': [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun2.l.google.com:19302' },
-                            { urls: 'stun:stun.relay.metered.ca:80' },
-                            {
-                                urls: 'turn:global.turn.twilio.com:3478?transport=udp',
-                                username: 'f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d',
-                                credential: 'w1uxM55V9yVoqyVFjt+mxDBV0F87AUCemaYVQGxsPLw='
-                            }
-                        ]
-                    },
-                    pingInterval: 5000, // 5秒ping一次，保持连接活跃
-                    retryTimes: 3, // 连接失败时重试3次
-                    serialization: 'binary', // 使用二进制序列化，更高效
-                    reliable: true // 可靠传输
-                };
+                window.fileToSend = file;
 
-                // 如果使用备用服务器
-                if (useBackupServer) {
-                    addDebugInfo('尝试使用备用PeerJS服务器');
-                    // 使用0.peerjs.com作为备用服务器
-                    peerConfig.host = '0.peerjs.com';
-                    peerConfig.secure = true;
-                    peerConfig.port = 443;
+                // 更新文件预览
+                updateFilePreview(file);
+
+                // 显示连接信息
+                connectionInfo.classList.remove('hidden');
+
+                // 初始化连接
+                if (!window.peer) {
+                    console.log('Initializing new Peer connection');
+                    window.peer = new Peer({
+                        debug: 2
+                    });
+
+                    window.peer.on('open', function (id) {
+                        console.log('My peer ID is: ' + id);
+                        document.getElementById('peer-id').textContent = id;
+                    });
+
+                    window.peer.on('connection', function (conn) {
+                        console.log('Incoming connection from:', conn.peer);
+                        handleConnection(conn);
+                    });
+
+                    window.peer.on('error', function (err) {
+                        console.error('PeerJS error:', err);
+                        showToast('连接错误：' + err.message);
+                    });
+                }
+            }
+
+            // 更新文件预览
+            function updateFilePreview(file) {
+                // 显示文件预览区域
+                filePreview.classList.remove('hidden');
+                uploadArea.classList.add('hidden');
+
+                // 更新文件信息
+                previewFilename.textContent = file.name;
+                previewFilesize.textContent = formatFileSize(file.size);
+
+                // 根据文件类型显示不同的预览
+                if (file.type.startsWith('image/')) {
+                    // 图片预览
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImage.src = e.target.result;
+                        previewImage.classList.remove('hidden');
+                        previewIcon.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
                 } else {
-                    // 使用用户选择的服务器配置
-                    const userServerConfig = getSelectedServerConfig(false);
-                    if (userServerConfig.host) {
-                        Object.assign(peerConfig, userServerConfig);
-                        addDebugInfo(`使用自定义服务器: ${userServerConfig.host}:${userServerConfig.port}`);
-                    }
+                    // 其他文件类型显示图标
+                    previewImage.classList.add('hidden');
+                    previewIcon.classList.remove('hidden');
+                    previewIcon.innerHTML = getFileIcon(file.type);
                 }
+            }
 
-                // 创建Peer连接
-                peer = new Peer(null, peerConfig);
+            // 移除文件
+            removeFileBtn.addEventListener('click', () => {
+                filePreview.classList.add('hidden');
+                uploadArea.classList.remove('hidden');
+                connectionInfo.classList.add('hidden');
+                fileInput.value = '';
+                // 如果有连接，关闭它
+                if (window.peer && window.conn) {
+                    window.conn.close();
+                }
+            });
 
-                peer.on('open', id => {
-                    peerId = id;
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
 
-                    // 如果有文件要发送，在连接ID中包含文件信息
-                    if (fileToSend) {
-                        try {
-                            // 创建包含文件扩展名的连接ID，而不是完整文件名
-                            const extension = fileToSend.name.split('.').pop().toLowerCase();
-                            // 只在ID中添加扩展名，不添加完整文件名
-                            const enhancedId = `${id}_${extension}`;
+            // 获取文件类型图标
+            function getFileIcon(type) {
+                let icon = '';
+                if (type.startsWith('image/')) {
+                    icon = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 15L16 10L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                } else if (type.startsWith('video/')) {
+                    icon = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 7L16 12L23 17V7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 5H3C1.89543 5 1 5.89543 1 7V17C1 18.1046 1.89543 19 3 19H14C15.1046 19 16 18.1046 16 17V7C16 5.89543 15.1046 5 14 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                } else if (type.startsWith('audio/')) {
+                    icon = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18V5L21 3V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 21C7.65685 21 9 19.6569 9 18C9 16.3431 7.65685 15 6 15C4.34315 15 3 16.3431 3 18C3 19.6569 4.34315 21 6 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18 19C19.6569 19 21 17.6569 21 16C21 14.3431 19.6569 13 18 13C16.3431 13 15 14.3431 15 16C15 17.6569 16.3431 19 18 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                } else if (type === 'application/pdf') {
+                    icon = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                } else {
+                    icon = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13 2V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                }
+                return icon;
+            }
 
-                            // 显示增强的连接ID
-                            peerIdDisplay.textContent = enhancedId;
-                            addDebugInfo(`创建包含文件扩展名的连接ID: ${enhancedId}`);
+            // PeerJS connection functionality
+            const peerId = document.getElementById('peer-id');
+            const copyIdBtn = document.getElementById('copy-id');
+            const progressContainer = document.querySelector('.progress-container');
+            const progressInner = document.querySelector('.progress-inner');
+            const progressText = document.querySelector('.progress-text');
 
-                            // 自动复制连接ID
-                            navigator.clipboard.writeText(enhancedId).then(() => {
-                                showToast('连接ID已自动复制到剪贴板');
-                            }).catch(err => {
-                                console.error('复制失败:', err);
-                                showToast('连接ID复制失败，请手动复制');
-                            });
+            // 处理连接
+            function handleConnection(conn) {
+                window.conn = conn;
 
-                            // 在后台存储完整的文件信息，用于后续传输
-                            window.completeFileInfo = {
-                                name: fileToSend.name,
-                                size: fileToSend.size,
-                                type: fileToSend.type || 'application/octet-stream'
-                            };
+                conn.on('open', () => {
+                    console.log('Connection opened');
+                    showToast('连接已建立');
 
-                            // 生成QR码
-                            QRCode.toCanvas(document.getElementById('qrcode'), enhancedId, {
-                                width: 200,
-                                margin: 1
-                            });
-                        } catch (e) {
-                            console.error('创建增强连接ID失败:', e);
-                            // 回退到普通ID
-                            peerIdDisplay.textContent = id;
+                    // 发送文件信息
+                    const file = window.fileToSend;
+                    conn.send({
+                        type: 'file-info',
+                        name: file.name,
+                        size: file.size,
+                        fileType: file.type
+                    });
 
-                            // 自动复制普通ID
-                            navigator.clipboard.writeText(id).then(() => {
-                                showToast('连接ID已自动复制到剪贴板');
-                            }).catch(err => {
-                                console.error('复制失败:', err);
-                                showToast('连接ID复制失败，请手动复制');
-                            });
-                        }
-                    } else {
-                        // 普通ID显示
-                        peerIdDisplay.textContent = id;
-
-                        // 自动复制普通ID
-                        navigator.clipboard.writeText(id).then(() => {
-                            showToast('连接ID已自动复制到剪贴板');
-                        }).catch(err => {
-                            console.error('复制失败:', err);
-                            showToast('连接ID复制失败，请手动复制');
-                        });
-                    }
-
-                    connectionInfo.classList.remove('hidden');
-                    connectionStatus.textContent = '等待接收方连接...';
+                    // 准备发送文件
+                    prepareFileTransfer(file);
                 });
 
-                peer.on('connection', connection => {
-                    conn = connection;
-
-                    // 设置更大的缓冲区大小
-                    if (conn._options) {
-                        conn._options.serialization = 'binary';
-                        conn._options.reliable = true;
-                        // 尝试设置更大的缓冲区
-                        if (conn._options.dataChannel) {
-                            try {
-                                conn._options.dataChannel.bufferedAmountLowThreshold = 1024 * 1024; // 1MB
-                            } catch (e) {
-                                console.warn('无法设置缓冲区阈值:', e);
-                            }
-                        }
+                conn.on('data', (data) => {
+                    console.log('Received:', data);
+                    if (data.type === 'ready') {
+                        // 开始发送文件
+                        startFileTransfer();
                     }
+                });
 
-                    connectionStatus.textContent = '接收方已连接，等待数据通道打开...';
+                conn.on('close', () => {
+                    console.log('Connection closed');
+                    showToast('连接已关闭');
+                });
+            }
 
-                    conn.on('open', () => {
-                        connectionStatus.textContent = '已连接! 准备发送文件...';
-                        transferStatus.classList.remove('hidden');
+            // 准备文件传输
+            function prepareFileTransfer(file) {
+                // 显示进度条
+                progressContainer.classList.remove('hidden');
+                progressInner.style.width = '0%';
+                progressText.textContent = '准备发送...';
 
-                        // 发送文件信息
-                        const fileInfo = {
-                            type: 'file-info',
-                            name: fileToSend.name,
-                            size: fileToSend.size,
-                            type: fileToSend.type || 'application/octet-stream'
+                // 将文件分割成块
+                const CHUNK_SIZE = 16384; // 16KB
+                window.fileChunks = [];
+                let offset = 0;
+
+                while (offset < file.size) {
+                    const chunk = file.slice(offset, offset + CHUNK_SIZE);
+                    window.fileChunks.push(chunk);
+                    offset += CHUNK_SIZE;
+                }
+
+                window.currentChunk = 0;
+                window.totalChunks = window.fileChunks.length;
+            }
+
+            // 开始文件传输
+            function startFileTransfer() {
+                if (!window.conn || !window.fileChunks) return;
+
+                const sendNextChunk = () => {
+                    if (window.currentChunk < window.totalChunks) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            window.conn.send({
+                                type: 'file-chunk',
+                                data: e.target.result,
+                                chunk: window.currentChunk,
+                                total: window.totalChunks
+                            });
+
+                            // 更新进度
+                            const progress = (window.currentChunk + 1) / window.totalChunks * 100;
+                            progressInner.style.width = progress + '%';
+                            progressText.textContent = `正在发送... ${progress.toFixed(1)}%`;
+
+                            window.currentChunk++;
+                            sendNextChunk();
                         };
-
-                        console.log('发送文件信息:', fileInfo);
-
-                        // 确保文件信息被正确发送
-                        try {
-                            // 确保文件名不包含特殊字符
-                            const safeFileName = fileToSend.name.replace(/[^\w\s.-]/g, '_');
-                            fileInfo.name = safeFileName;
-                            fileInfo.originalName = fileToSend.name; // 保存原始文件名
-
-                            const fileInfoStr = JSON.stringify(fileInfo);
-                            conn.send(fileInfoStr);
-                            console.log('文件信息已发送，长度:', fileInfoStr.length);
-                            addDebugInfo(`发送文件信息: ${fileInfo.name}, 大小: ${formatFileSize(fileInfo.size)}, 类型: ${fileInfo.type}`);
-
-                            // 等待确认接收方已收到文件信息
-                            setTimeout(() => {
-                                // 再次发送文件信息以确保接收方收到
-                                conn.send(fileInfoStr);
-                                console.log('再次发送文件信息');
-                                addDebugInfo('再次发送文件信息以确保接收');
-
-                                // 短暂延迟后开始发送文件，确保文件信息已被接收
-                                setTimeout(() => {
-                                    // 读取并发送文件
-                                    sendFile(fileToSend);
-                                }, 1000);
-                            }, 500);
-                        } catch (e) {
-                            console.error('发送文件信息失败:', e);
-                            connectionStatus.textContent = `发送文件信息失败: ${e.message}`;
-                            connectionStatus.classList.add('error');
-                        }
-                    });
-
-                    conn.on('close', () => {
-                        connectionStatus.textContent = '连接已关闭';
-                    });
-
-                    conn.on('error', err => {
-                        console.error('连接错误:', err);
-                        connectionStatus.textContent = `连接错误: ${err}`;
-                        connectionStatus.classList.add('error');
-                        createLinkBtn.disabled = false;
-                    });
-                });
-
-                peer.on('error', err => {
-                    console.error('PeerJS错误:', err);
-
-                    // 如果是服务器错误且尚未尝试备用服务器，则尝试使用备用服务器
-                    if (err.type === 'server-error' && !useBackupServer) {
-                        addDebugInfo('主PeerJS服务器错误，尝试使用备用服务器');
-                        connectionStatus.textContent = '主服务器连接失败，正在尝试备用服务器...';
-                        // 使用备用服务器重新初始化
-                        setTimeout(() => {
-                            initPeerConnection(true);
-                        }, 1000);
-                        return;
-                    }
-
-                    connectionStatus.textContent = `连接错误: ${err.type}`;
-                    connectionStatus.classList.add('error');
-                    createLinkBtn.disabled = false;
-                });
-            }
-        }
-
-        // 发送文件
-        function sendFile(file) {
-            // 增加默认块大小到256KB
-            const initialChunkSize = 256 * 1024; // 从16KB增加到256KB
-            let chunkSize = initialChunkSize;
-            const maxChunkSize = 1024 * 1024; // 最大块大小1MB
-            const reader = new FileReader();
-            let offset = 0;
-            let chunkCount = 0;
-            let lastSendTime = Date.now();
-            let adaptiveChunkSizeEnabled = true; // 启用自适应块大小
-
-            console.log(`开始发送文件: ${file.name}, 大小: ${formatFileSize(file.size)}, 类型: ${file.type || 'unknown'}, 初始块大小: ${formatFileSize(chunkSize)}`);
-            addDebugInfo(`开始发送文件，初始块大小: ${formatFileSize(chunkSize)}`);
-
-            reader.onload = e => {
-                try {
-                    const chunk = e.target.result;
-                    const currentTime = Date.now();
-                    const sendStartTime = currentTime;
-
-                    conn.send(chunk);
-
-                    const sendEndTime = Date.now();
-                    const sendDuration = sendEndTime - sendStartTime;
-                    const timeSinceLastSend = sendStartTime - lastSendTime;
-                    lastSendTime = sendEndTime;
-
-                    offset += chunk.byteLength;
-                    chunkCount++;
-
-                    // 更新进度
-                    const progress = Math.min(100, Math.floor((offset / file.size) * 100));
-                    sendProgress.value = progress;
-                    sendStatus.textContent =
-                        `已发送 ${formatFileSize(offset)} / ${formatFileSize(file.size)} (${progress}%)`;
-
-                    // 自适应调整块大小
-                    if (adaptiveChunkSizeEnabled && chunkCount > 5) { // 发送几个块后开始调整
-                        if (sendDuration < 100 && chunkSize < maxChunkSize) {
-                            // 发送速度快，增加块大小
-                            chunkSize = Math.min(chunkSize * 1.5, maxChunkSize);
-                            if (chunkCount % 5 === 0) {
-                                addDebugInfo(`传输速度良好，增加块大小至: ${formatFileSize(chunkSize)}`);
-                            }
-                        } else if (sendDuration > 500 && chunkSize > initialChunkSize / 2) {
-                            // 发送速度慢，减小块大小
-                            chunkSize = Math.max(chunkSize / 1.5, initialChunkSize / 2);
-                            addDebugInfo(`传输速度较慢，减小块大小至: ${formatFileSize(chunkSize)}`);
-                        }
-                    }
-
-                    // 每10%记录一次日志或每50个块记录一次
-                    if (progress % 10 === 0 || chunkCount % 50 === 0) {
-                        const speed = chunk.byteLength / (sendDuration / 1000); // 字节/秒
-                        console.log(`文件发送进度: ${progress}%, 已发送 ${formatFileSize(offset)}, 块数: ${chunkCount}, 当前块大小: ${formatFileSize(chunkSize)}, 速度: ${formatFileSize(speed)}/s`);
-
-                        if (chunkCount % 50 === 0) {
-                            addDebugInfo(`传输速度: ${formatFileSize(speed)}/s, 当前块大小: ${formatFileSize(chunkSize)}`);
-                        }
-                    }
-
-                    if (offset < file.size) {
-                        // 继续读取下一块，使用setTimeout避免阻塞UI
-                        setTimeout(readNextChunk, 0);
+                        reader.readAsArrayBuffer(window.fileChunks[window.currentChunk]);
                     } else {
-                        console.log(`文件发送完成: 总共发送 ${chunkCount} 块, ${formatFileSize(offset)} 数据`);
-                        sendStatus.textContent = '文件发送完成!';
-                        showToast('文件发送完成！');
+                        // 传输完成
+                        window.conn.send({ type: 'file-complete' });
+                        progressText.textContent = '发送完成';
+                        showToast('文件发送完成');
                     }
-                } catch (err) {
-                    console.error('发送文件块错误:', err);
-                    sendStatus.textContent = `发送错误: ${err.message}`;
-                    sendStatus.classList.add('error');
-                }
-            };
-
-            reader.onerror = error => {
-                console.error('文件读取错误:', error);
-                sendStatus.textContent = `文件读取错误: ${error}`;
-                sendStatus.classList.add('error');
-            };
-
-            function readNextChunk() {
-                const end = Math.min(offset + chunkSize, file.size);
-                const slice = file.slice(offset, end);
-                reader.readAsArrayBuffer(slice);
-            }
-
-            readNextChunk();
-        }
-
-        // 扫描QR码
-        scanQrBtn.addEventListener('click', () => {
-            if (scanning) {
-                stopScanning();
-                return;
-            }
-
-            startScanning();
-        });
-
-        // 开始扫描
-        function startScanning() {
-            scanning = true;
-            scanQrBtn.textContent = '停止扫描';
-            videoPreview.classList.remove('hidden');
-
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(stream => {
-                    videoStream = stream;
-                    videoPreview.srcObject = stream;
-                    videoPreview.play();
-
-                    // 定时检查视频帧中的QR码
-                    requestAnimationFrame(scanVideoFrame);
-                })
-                .catch(err => {
-                    console.error('摄像头访问错误:', err);
-                    receiverStatus.textContent = `摄像头访问错误: ${err.message}`;
-                    receiverStatus.classList.add('error');
-                    stopScanning();
-                });
-        }
-
-        // 停止扫描
-        function stopScanning() {
-            scanning = false;
-            scanQrBtn.textContent = '扫描QR码';
-            videoPreview.classList.add('hidden');
-
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-        }
-
-        // 扫描视频帧
-        function scanVideoFrame() {
-            if (!scanning) return;
-
-            if (videoPreview.readyState === videoPreview.HAVE_ENOUGH_DATA) {
-                const canvasContext = canvas.getContext('2d');
-                canvas.height = videoPreview.videoHeight;
-                canvas.width = videoPreview.videoWidth;
-                canvasContext.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
-
-                const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-
-                if (code) {
-                    // 找到QR码
-                    connectionIdInput.value = code.data;
-                    stopScanning();
-                    connectToPeer();
-                }
-            }
-
-            requestAnimationFrame(scanVideoFrame);
-        }
-
-        // 连接按钮处理
-        connectButton.addEventListener('click', connectToPeer);
-
-        // 重试按钮处理
-        retryButton.addEventListener('click', () => {
-            retryButton.classList.add('hidden');
-            connectToPeer();
-        });
-
-        // 显示/隐藏调试信息
-        toggleDebug.addEventListener('click', () => {
-            const pre = document.getElementById('debug-text');
-            if (pre.style.display === 'none') {
-                pre.style.display = 'block';
-            } else {
-                pre.style.display = 'none';
-            }
-        });
-
-        // 添加调试信息
-        function addDebugInfo(info) {
-            const timestamp = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.className = 'debug-entry';
-            entry.textContent = `[${timestamp}] ${info}`;
-            debugInfo.appendChild(entry);
-            debugInfo.scrollTop = debugInfo.scrollHeight;
-
-            // 同时添加到连接调试信息
-            debugText.textContent += `[${timestamp}] ${info}\n`;
-            debugText.scrollTop = debugText.scrollHeight;
-            connectionDebugInfo.classList.remove('hidden');
-        }
-
-        // 清除调试信息
-        clearDebugBtn.addEventListener('click', () => {
-            debugInfo.innerHTML = '';
-            addDebugInfo('调试信息已清除');
-        });
-
-        // 连接到对方
-        function connectToPeer() {
-            const inputId = connectionIdInput.value.trim();
-            if (!inputId) {
-                alert('请输入连接ID');
-                return;
-            }
-
-            // 处理可能包含文件信息的连接ID
-            let remotePeerId = inputId;
-            let fileExtension = '';
-
-            // 检查ID是否包含文件扩展名
-            if (inputId.includes('_')) {
-                const parts = inputId.split('_');
-                remotePeerId = parts[0]; // 实际的Peer ID
-                if (parts.length > 1) {
-                    fileExtension = parts[1];
-                    addDebugInfo(`从连接ID中提取到文件扩展名: ${fileExtension}`);
-                }
-            }
-
-            receiverStatus.textContent = '正在连接...';
-            connectButton.disabled = true;
-            debugText.textContent = ''; // 清空调试信息
-            addDebugInfo(`尝试连接到ID: ${remotePeerId}${fileExtension ? ', 预期接收文件类型: ' + fileExtension : ''}`);
-
-            // 清理之前的连接
-            if (peer) {
-                peer.destroy();
-            }
-
-            // 尝试使用默认PeerJS服务器
-            initPeerConnection(remotePeerId, fileExtension);
-
-            function initPeerConnection(remotePeerId, fileExtension, useBackupServer = false) {
-                // 销毁之前的连接（如果有）
-                if (peer) {
-                    peer.destroy();
-                }
-
-                let peerConfig = {
-                    debug: 2,
-                    config: {
-                        'iceServers': [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun2.l.google.com:19302' },
-                            { urls: 'stun:stun.relay.metered.ca:80' },
-                            {
-                                urls: 'turn:global.turn.twilio.com:3478?transport=udp',
-                                username: 'f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d',
-                                credential: 'w1uxM55V9yVoqyVFjt+mxDBV0F87AUCemaYVQGxsPLw='
-                            }
-                        ]
-                    },
-                    pingInterval: 5000, // 5秒ping一次，保持连接活跃
-                    retryTimes: 3, // 连接失败时重试3次
-                    serialization: 'binary', // 使用二进制序列化，更高效
-                    reliable: true // 可靠传输
                 };
 
-                // 如果使用备用服务器
-                if (useBackupServer) {
-                    addDebugInfo('尝试使用备用PeerJS服务器');
-                    // 使用0.peerjs.com作为备用服务器
-                    peerConfig.host = '0.peerjs.com';
-                    peerConfig.secure = true;
-                    peerConfig.port = 443;
-                }
-
-                // 创建Peer连接
-                peer = new Peer(null, peerConfig);
-
-                // 设置连接超时
-                const connectionTimeout = setTimeout(() => {
-                    if (conn && conn.open) return; // 如果已连接，不执行超时处理
-
-                    // 如果尚未尝试备用服务器，则尝试使用备用服务器
-                    if (!useBackupServer) {
-                        addDebugInfo('连接超时，尝试使用备用服务器');
-                        receiverStatus.textContent = '主服务器连接超时，正在尝试备用服务器...';
-                        initPeerConnection(remotePeerId, fileExtension, true);
-                        return;
-                    }
-
-                    receiverStatus.textContent = '连接超时，请检查连接ID是否正确或尝试刷新页面重试';
-                    receiverStatus.classList.add('error');
-                    connectButton.disabled = false;
-                    retryButton.classList.remove('hidden');
-
-                    if (peer) {
-                        peer.destroy();
-                    }
-                }, 30000); // 30秒超时
-
-                peer.on('open', id => {
-                    addDebugInfo(`本地Peer ID: ${id}`);
-                    addDebugInfo(`尝试连接到远程Peer ID: ${remotePeerId}`);
-                    try {
-                        // 连接到发送方
-                        conn = peer.connect(remotePeerId, {
-                            reliable: true,
-                            serialization: 'binary', // 使用二进制序列化
-                            // 设置更大的缓冲区
-                            metadata: {
-                                type: 'file-receiver',
-                                supportLargeChunks: true
-                            }
-                        });
-
-                        conn.on('open', () => {
-                            clearTimeout(connectionTimeout);
-                            addDebugInfo('连接成功建立');
-                            receiverStatus.textContent = '已连接! 等待文件传输...';
-                            receiverStatus.classList.remove('error');
-
-                            // 设置更大的缓冲区大小
-                            if (conn._options) {
-                                try {
-                                    conn._options.serialization = 'binary';
-                                    conn._options.reliable = true;
-                                    // 尝试设置更大的缓冲区
-                                    if (conn._options.dataChannel) {
-                                        conn._options.dataChannel.bufferedAmountLowThreshold = 1024 * 1024; // 1MB
-                                    }
-                                } catch (e) {
-                                    console.warn('无法设置缓冲区阈值:', e);
-                                }
-                            }
-
-                            // 如果从ID中提取到了文件扩展名，预先创建文件信息
-                            if (fileExtension) {
-                                let fileType = 'application/octet-stream';
-
-                                // 根据扩展名猜测文件类型
-                                switch (fileExtension.toLowerCase()) {
-                                    case 'jpg':
-                                    case 'jpeg':
-                                        fileType = 'image/jpeg';
-                                        break;
-                                    case 'png':
-                                        fileType = 'image/png';
-                                        break;
-                                    case 'gif':
-                                        fileType = 'image/gif';
-                                        break;
-                                    case 'pdf':
-                                        fileType = 'application/pdf';
-                                        break;
-                                    case 'zip':
-                                        fileType = 'application/zip';
-                                        break;
-                                    case 'docx':
-                                        fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-                                        break;
-                                    case 'xlsx':
-                                        fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                                        break;
-                                    case 'mp3':
-                                        fileType = 'audio/mpeg';
-                                        break;
-                                    case 'mp4':
-                                        fileType = 'video/mp4';
-                                        break;
-                                    // 可以添加更多类型...
-                                }
-
-                                const timestamp = new Date().getTime();
-                                const defaultFileName = `文件_${timestamp}.${fileExtension}`;
-
-                                addDebugInfo(`预创建文件信息: ${defaultFileName}, 类型: ${fileType}`);
-
-                                // 预先创建文件信息，但不显示UI，等待实际接收数据时再显示
-                                fileInfo = {
-                                    type: 'file-info',
-                                    name: defaultFileName,
-                                    originalName: defaultFileName,
-                                    size: 'unknown',
-                                    type: fileType,
-                                    extension: fileExtension,
-                                    fromConnectionId: true
-                                };
-                            }
-                        });
-
-                        conn.on('data', data => {
-                            if (typeof data === 'string') {
-                                try {
-                                    const parsed = JSON.parse(data);
-                                    if (parsed.type === 'file-info') {
-                                        addDebugInfo(`接收文件信息: ${parsed.name}, 大小: ${formatFileSize(parsed.size)}`);
-                                    }
-                                } catch (e) { }
-                            }
-                            handleReceivedData(data);
-                        });
-
-                        conn.on('close', () => {
-                            addDebugInfo('连接已关闭');
-                            receiverStatus.textContent = '连接已关闭';
-                            connectButton.disabled = false;
-                        });
-
-                        conn.on('error', err => {
-                            clearTimeout(connectionTimeout);
-                            addDebugInfo(`连接错误: ${err}`);
-                            console.error('连接错误:', err);
-                            receiverStatus.textContent = `连接错误: ${err}`;
-                            receiverStatus.classList.add('error');
-                            connectButton.disabled = false;
-                            retryButton.classList.remove('hidden');
-                        });
-                    } catch (e) {
-                        clearTimeout(connectionTimeout);
-                        addDebugInfo(`连接异常: ${e.message}`);
-                        console.error('连接异常:', e);
-                        receiverStatus.textContent = `连接异常: ${e.message}`;
-                        receiverStatus.classList.add('error');
-                        connectButton.disabled = false;
-                        retryButton.classList.remove('hidden');
-                    }
-                });
-
-                peer.on('error', err => {
-                    clearTimeout(connectionTimeout);
-                    addDebugInfo(`PeerJS错误: ${err.type}`);
-                    console.error('PeerJS错误:', err);
-
-                    // 如果是服务器错误且尚未尝试备用服务器，则尝试使用备用服务器
-                    if (err.type === 'server-error' && !useBackupServer) {
-                        addDebugInfo('主PeerJS服务器错误，尝试使用备用服务器');
-                        receiverStatus.textContent = '主服务器连接失败，正在尝试备用服务器...';
-                        // 使用备用服务器重新初始化
-                        setTimeout(() => {
-                            initPeerConnection(remotePeerId, fileExtension, true);
-                        }, 1000);
-                        return;
-                    }
-
-                    let errorMsg = '连接错误';
-
-                    // 提供更具体的错误信息
-                    if (err.type === 'peer-unavailable') {
-                        errorMsg = '找不到该连接ID，请检查ID是否正确或发送方是否在线';
-                    } else if (err.type === 'network') {
-                        errorMsg = '网络错误，请检查您的网络连接';
-                    } else if (err.type === 'server-error') {
-                        errorMsg = '服务器错误，请稍后重试';
-                    } else if (err.type) {
-                        errorMsg = `错误类型: ${err.type}`;
-                    }
-
-                    receiverStatus.textContent = errorMsg;
-                    receiverStatus.classList.add('error');
-                    connectButton.disabled = false;
-                    retryButton.classList.remove('hidden');
-                });
+                sendNextChunk();
             }
-        }
 
-        // 处理接收到的数据
-        function handleReceivedData(data) {
-            try {
-                console.log('接收到数据类型:', typeof data);
+            // 复制连接ID
+            copyIdBtn.addEventListener('click', () => {
+                const id = peerId.textContent;
+                navigator.clipboard.writeText(id).then(() => {
+                    showToast('连接ID已复制');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    showToast('复制失败');
+                });
+            });
 
-                // 如果是字符串，尝试解析为文件信息
-                if (typeof data === 'string') {
-                    try {
-                        const parsedData = JSON.parse(data);
-                        console.log('解析的JSON数据:', parsedData);
+            // 显示Toast提示
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
 
-                        if (parsedData.type === 'file-info') {
-                            // 保存文件信息
-                            fileInfo = parsedData;
-                            receivedChunks = []; // 重置接收的数据块
-                            receivedSize = 0;
-
-                            // 预分配内存以提高性能
-                            if (fileInfo.size && fileInfo.size !== 'unknown') {
-                                // 估计需要的块数量，预分配数组
-                                const estimatedChunks = Math.ceil(fileInfo.size / (1024 * 1024)) + 10; // 假设平均块大小为1MB，额外加10个缓冲
-                                receivedChunks = new Array(estimatedChunks);
-                                addDebugInfo(`预分配 ${estimatedChunks} 个数据块空间`);
-                            }
-
-                            // 显示文件信息
-                            receivedFileInfo.innerHTML = `
-                                <p>文件名: ${fileInfo.name}</p>
-                                <p>大小: ${formatFileSize(fileInfo.size)}</p>
-                                <p>类型: ${fileInfo.type || '未知'}</p>
-                            `;
-                            receivedFileInfo.style.display = 'block';
-
-                            // 显示进度条
-                            progressContainer.style.display = 'block';
-                            progressBar.style.width = '0%';
-                            progressText.textContent = '0%';
-
-                            console.log('准备接收文件:', fileInfo.name);
-                            addDebugInfo(`准备接收文件: ${fileInfo.name}, 大小: ${formatFileSize(fileInfo.size)}, 类型: ${fileInfo.type || '未知'}`);
-
-                            // 显示下载容器但隐藏下载按钮
-                            downloadContainer.style.display = 'block';
-                            autoDownloadBtn.style.display = 'none';
-                            manualSaveBtn.style.display = 'none';
-                            altSaveBtn.style.display = 'none';
-                            forceCompleteBtn.style.display = 'block'; // 显示强制完成按钮
-
-                            // 更新文件详情
-                            fileNameDisplay.textContent = fileInfo.name;
-                            fileSizeDisplay.textContent = formatFileSize(fileInfo.size);
-                            fileTypeDisplay.textContent = fileInfo.type || '未知';
-
-                            // 记录接收开始时间
-                            fileInfo.receiveStartTime = Date.now();
-                        }
-                    } catch (e) {
-                        console.error('解析JSON数据失败:', e);
-                        addDebugInfo(`解析JSON数据失败: ${e.message}`);
-                    }
-                }
-                // 如果是二进制数据，添加到接收的数据块中
-                else if (data instanceof ArrayBuffer || data instanceof Blob) {
-                    // 记录当前块的接收时间
-                    const chunkReceiveTime = Date.now();
-
-                    // 如果没有文件信息，创建默认文件信息
-                    if (!fileInfo || !fileInfo.name) {
-                        console.log('接收到二进制数据但没有文件信息，创建默认文件信息');
-                        addDebugInfo('接收到二进制数据但没有文件信息，创建默认文件信息');
-
-                        // 检测文件类型
-                        let fileType = 'application/octet-stream';
-                        let extension = 'bin';
-
-                        // 如果是ArrayBuffer，转换为Uint8Array以检查前几个字节
-                        if (data instanceof ArrayBuffer) {
-                            const bytes = new Uint8Array(data.slice(0, 16)); // 检查更多字节以提高准确性
-
-                            // 检测常见文件类型的魔数 (文件头部特征)
-                            if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
-                                fileType = 'image/jpeg';
-                                extension = 'jpg';
-                            } else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
-                                fileType = 'image/png';
-                                extension = 'png';
-                            } else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
-                                fileType = 'image/gif';
-                                extension = 'gif';
-                            } else if (bytes[0] === 0x50 && bytes[1] === 0x4B) {
-                                fileType = 'application/zip';
-                                extension = 'zip';
-                            } else if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
-                                fileType = 'application/pdf';
-                                extension = 'pdf';
-                            } else if ((bytes[0] === 0xD0 && bytes[1] === 0xCF) || (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04 && bytes[30] === 0x78 && bytes[31] === 0x6C)) {
-                                // Office文档检测
-                                fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                                extension = 'xlsx';
-                            } else if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04 && bytes[30] === 0x77 && bytes[31] === 0x6F) {
-                                fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-                                extension = 'docx';
-                            } else if (bytes[0] === 0x1F && bytes[1] === 0x8B) {
-                                fileType = 'application/gzip';
-                                extension = 'gz';
-                            } else if (bytes[0] === 0x52 && bytes[1] === 0x61 && bytes[2] === 0x72 && bytes[3] === 0x21) {
-                                fileType = 'application/x-rar-compressed';
-                                extension = 'rar';
-                            } else if (bytes[0] === 0x38 && bytes[1] === 0x42 && bytes[2] === 0x50 && bytes[3] === 0x53) {
-                                fileType = 'image/psd';
-                                extension = 'psd';
-                            } else if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
-                                fileType = 'audio/mpeg';
-                                extension = 'mp3';
-                            } else if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0x00 && (bytes[3] === 0x18 || bytes[3] === 0x20) && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
-                                fileType = 'video/mp4';
-                                extension = 'mp4';
-                            } else if (bytes[0] === 0x42 && bytes[1] === 0x4D) {
-                                fileType = 'image/bmp';
-                                extension = 'bmp';
-                            } else if (bytes[0] === 0x7B && bytes[1] === 0x22) {
-                                fileType = 'application/json';
-                                extension = 'json';
-                            } else if (bytes[0] === 0x3C && bytes[1] === 0x3F && bytes[2] === 0x78 && bytes[3] === 0x6D && bytes[4] === 0x6C) {
-                                fileType = 'application/xml';
-                                extension = 'xml';
-                            } else if (bytes[0] === 0x3C && bytes[1] === 0x68 && bytes[2] === 0x74 && bytes[3] === 0x6D && bytes[4] === 0x6C) {
-                                fileType = 'text/html';
-                                extension = 'html';
-                            }
-
-                            // 记录检测到的文件类型
-                            addDebugInfo(`文件类型检测: 检测到 ${fileType} (${extension})`);
-                        }
-
-                        // 尝试从URL或其他来源获取原始文件名
-                        let originalFileName = '';
-                        try {
-                            // 如果连接ID包含文件名信息，尝试提取
-                            const connId = connectionIdInput.value.trim();
-                            if (connId && connId.includes('_')) {
-                                const parts = connId.split('_');
-                                if (parts.length > 1) {
-                                    // 从连接ID中提取扩展名
-                                    const fileExt = parts[1];
-                                    if (fileExt) {
-                                        extension = fileExt;
-                                        const timestamp = new Date().getTime();
-                                        originalFileName = `文件_${timestamp}.${extension}`;
-                                        addDebugInfo(`从连接ID中提取到扩展名: ${extension}, 使用文件名: ${originalFileName}`);
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.error('提取文件扩展名失败:', e);
-                        }
-
-                        const timestamp = new Date().getTime();
-                        const defaultFileName = originalFileName || `文件_${timestamp}.${extension}`;
-
-                        fileInfo = {
-                            type: 'file-info',
-                            name: defaultFileName,
-                            originalName: defaultFileName, // 保存原始文件名
-                            size: 'unknown',
-                            type: fileType,
-                            extension: extension,
-                            receiveStartTime: Date.now() // 记录接收开始时间
-                        };
-
-                        // 显示文件信息
-                        receivedFileInfo.innerHTML = `
-                            <p>文件名: ${fileInfo.name}</p>
-                            <p>大小: 接收中...</p>
-                            <p>类型: ${fileInfo.type}</p>
-                            <p>检测到的扩展名: ${extension}</p>
-                        `;
-                        receivedFileInfo.style.display = 'block';
-
-                        // 显示进度条
-                        progressContainer.style.display = 'block';
-                        progressBar.style.width = '0%';
-                        progressText.textContent = '接收中...';
-
-                        // 显示下载容器但隐藏下载按钮
-                        downloadContainer.style.display = 'block';
-                        autoDownloadBtn.style.display = 'none';
-                        manualSaveBtn.style.display = 'none';
-                        altSaveBtn.style.display = 'none';
-                        forceCompleteBtn.style.display = 'block'; // 显示强制完成按钮
-
-                        // 更新文件详情
-                        fileNameDisplay.textContent = fileInfo.name;
-                        fileSizeDisplay.textContent = '接收中...';
-                        fileTypeDisplay.textContent = fileInfo.type;
-
-                        // 重置接收的数据块
-                        receivedChunks = [];
-                        receivedSize = 0;
-                    } else if (fileInfo && fileInfo.fromConnectionId && !fileInfo.uiInitialized) {
-                        // 如果文件信息是从连接ID中提取的，但UI尚未初始化，则初始化UI
-                        addDebugInfo(`使用从连接ID中提取的文件信息: ${fileInfo.name}`);
-
-                        // 显示文件信息
-                        receivedFileInfo.innerHTML = `
-                            <p>文件名: ${fileInfo.name}</p>
-                            <p>大小: 接收中...</p>
-                            <p>类型: ${fileInfo.type}</p>
-                            <p>来源: 连接ID中的文件信息</p>
-                        `;
-                        receivedFileInfo.style.display = 'block';
-
-                        // 显示进度条
-                        progressContainer.style.display = 'block';
-                        progressBar.style.width = '0%';
-                        progressText.textContent = '接收中...';
-
-                        // 显示下载容器但隐藏下载按钮
-                        downloadContainer.style.display = 'block';
-                        autoDownloadBtn.style.display = 'none';
-                        manualSaveBtn.style.display = 'none';
-                        altSaveBtn.style.display = 'none';
-                        forceCompleteBtn.style.display = 'block'; // 显示强制完成按钮
-
-                        // 更新文件详情
-                        fileNameDisplay.textContent = fileInfo.name;
-                        fileSizeDisplay.textContent = '接收中...';
-                        fileTypeDisplay.textContent = fileInfo.type;
-
-                        // 标记UI已初始化
-                        fileInfo.uiInitialized = true;
-                        fileInfo.receiveStartTime = Date.now(); // 记录接收开始时间
-                    }
-
-                    // 添加数据块 - 使用更高效的方式
-                    const chunk = data instanceof Blob ? data : new Blob([data]);
-                    const chunkIndex = receivedChunks.length;
-                    receivedChunks[chunkIndex] = chunk; // 直接赋值而不是push，更高效
-                    receivedSize += chunk.size;
-
-                    // 计算接收速度
-                    const elapsedTime = (chunkReceiveTime - (fileInfo.lastChunkTime || fileInfo.receiveStartTime)) / 1000; // 秒
-                    const instantSpeed = chunk.size / (elapsedTime || 0.001); // 字节/秒，避免除以0
-                    fileInfo.lastChunkTime = chunkReceiveTime;
-
-                    // 更新平均速度
-                    if (!fileInfo.totalElapsedTime) fileInfo.totalElapsedTime = 0;
-                    if (!fileInfo.speedSamples) fileInfo.speedSamples = [];
-
-                    fileInfo.totalElapsedTime += elapsedTime;
-                    fileInfo.speedSamples.push(instantSpeed);
-
-                    // 保留最近10个样本计算平均速度
-                    if (fileInfo.speedSamples.length > 10) {
-                        fileInfo.speedSamples.shift();
-                    }
-
-                    const avgSpeed = fileInfo.speedSamples.reduce((a, b) => a + b, 0) / fileInfo.speedSamples.length;
-
-                    // 只在特定间隔记录日志，减少UI更新频率
-                    const shouldLogDetail = chunkIndex % 20 === 0 || receivedChunks.length <= 5;
-
-                    if (shouldLogDetail) {
-                        console.log(`接收数据块 #${chunkIndex + 1}, 大小: ${formatFileSize(chunk.size)}, 总接收: ${formatFileSize(receivedSize)}, 速度: ${formatFileSize(avgSpeed)}/s`);
-                        addDebugInfo(`接收数据块 #${chunkIndex + 1}, 大小: ${formatFileSize(chunk.size)}, 速度: ${formatFileSize(avgSpeed)}/s`);
-                    }
-
-                    // 更新进度
-                    if (fileInfo && fileInfo.size && fileInfo.size !== 'unknown') {
-                        const progress = Math.min(100, Math.round((receivedSize / fileInfo.size) * 100));
-                        progressBar.style.width = `${progress}%`;
-                        progressText.textContent = `${progress}% - ${formatFileSize(avgSpeed)}/s`;
-
-                        // 如果接收完成，合并文件并创建下载链接
-                        if (receivedSize >= fileInfo.size) {
-                            completeFileReception();
-                        }
-                    } else {
-                        // 如果不知道文件大小，只显示接收的数据量和速度
-                        progressText.textContent = `已接收: ${formatFileSize(receivedSize)} - ${formatFileSize(avgSpeed)}/s`;
-
-                        // 重置自动检测计时器
-                        if (autoDetectTimer) {
-                            clearTimeout(autoDetectTimer);
-                        }
-
-                        // 设置新的自动检测计时器
-                        autoDetectTimer = setTimeout(() => {
-                            console.log('自动检测计时器触发，尝试完成文件接收');
-                            addDebugInfo('自动检测计时器触发，尝试完成文件接收');
-                            completeFileReception();
-                        }, 5000); // 5秒内没有新数据则尝试完成
-                    }
-                }
-            } catch (e) {
-                console.error('处理接收数据时出错:', e);
-                addDebugInfo(`处理接收数据时出错: ${e.message}`);
-            }
-        }
-
-        // 完成文件接收
-        function completeFileReception() {
-            try {
-                // 计算总接收时间和平均速度
-                const totalTime = (Date.now() - fileInfo.receiveStartTime) / 1000; // 秒
-                const avgSpeed = receivedSize / totalTime; // 字节/秒
-
-                console.log('完成文件接收, 总大小:', receivedSize, '总耗时:', totalTime.toFixed(2), '秒', '平均速度:', formatFileSize(avgSpeed) + '/s');
-                addDebugInfo(`完成文件接收, 总大小: ${formatFileSize(receivedSize)}, 耗时: ${totalTime.toFixed(2)}秒, 平均速度: ${formatFileSize(avgSpeed)}/s`);
-
-                // 更新文件信息中的实际大小
-                if (fileInfo.size === 'unknown') {
-                    fileInfo.size = receivedSize;
-                    fileSizeDisplay.textContent = formatFileSize(receivedSize);
-                }
-
-                // 更新进度显示为完成
-                progressBar.style.width = '100%';
-                progressText.textContent = '100% - 接收完成';
-
-                // 显示处理中状态
-                const processingMessage = document.createElement('div');
-                processingMessage.className = 'info-box';
-                processingMessage.textContent = '正在处理文件，请稍候...';
-                downloadContainer.insertBefore(processingMessage, downloadContainer.firstChild);
-
-                // 使用setTimeout延迟执行合并操作，让UI有时间更新
+                // 3秒后移除
                 setTimeout(() => {
-                    try {
-                        // 过滤掉可能的空值
-                        const validChunks = receivedChunks.filter(chunk => chunk != null);
+                    toast.remove();
+                }, 3000);
+            }
 
-                        // 合并文件块 - 使用更高效的方式
-                        addDebugInfo(`开始合并 ${validChunks.length} 个数据块...`);
-                        const mergeStartTime = Date.now();
+            // 接收端功能
+            const connectButton = document.getElementById('connect-button');
+            const connectionIdInput = document.getElementById('connection-id-input');
+            const fileInfo = document.getElementById('file-info');
+            const incomingFilename = document.getElementById('incoming-filename');
+            const incomingFilesize = document.getElementById('incoming-filesize');
+            const acceptFile = document.getElementById('accept-file');
+            const rejectFile = document.getElementById('reject-file');
 
-                        // 对于大文件，使用分批处理避免内存问题
-                        let completeFile;
-                        if (receivedSize > 100 * 1024 * 1024) { // 大于100MB的文件
-                            addDebugInfo('检测到大文件，使用分批处理方式合并');
+            // 连接按钮点击事件
+            connectButton.addEventListener('click', () => {
+                const targetId = connectionIdInput.value.trim();
+                if (!targetId) {
+                    showToast('请输入连接ID');
+                    return;
+                }
+                connectToPeer(targetId);
+            });
 
-                            // 分批合并，每批50MB
-                            const batchSize = 50 * 1024 * 1024; // 50MB
-                            let currentSize = 0;
-                            let currentBatch = [];
-                            let batchFiles = [];
+            // 连接到对等端
+            function connectToPeer(targetId) {
+                if (!window.peer) {
+                    window.peer = new Peer({
+                        debug: 2
+                    });
 
-                            for (let i = 0; i < validChunks.length; i++) {
-                                const chunk = validChunks[i];
-                                if (!chunk) continue;
+                    window.peer.on('open', () => {
+                        initiateConnection(targetId);
+                    });
+                } else {
+                    initiateConnection(targetId);
+                }
+            }
 
-                                currentBatch.push(chunk);
-                                currentSize += chunk.size;
+            // 初始化连接
+            function initiateConnection(targetId) {
+                window.conn = window.peer.connect(targetId);
+                window.receivedChunks = [];
+                window.expectedChunks = 0;
 
-                                // 当前批次达到阈值或是最后一个块
-                                if (currentSize >= batchSize || i === validChunks.length - 1) {
-                                    batchFiles.push(new Blob(currentBatch, { type: fileInfo.type }));
-                                    currentBatch = [];
-                                    currentSize = 0;
-                                    addDebugInfo(`完成批次 ${batchFiles.length} 合并`);
-                                }
-                            }
+                window.conn.on('open', () => {
+                    console.log('Connected to:', targetId);
+                    showToast('连接成功');
+                });
 
-                            // 合并所有批次
-                            completeFile = new Blob(batchFiles, { type: fileInfo.type });
-                            addDebugInfo(`完成 ${batchFiles.length} 个批次的最终合并`);
+                window.conn.on('data', (data) => {
+                    if (data.type === 'file-info') {
+                        // 显示文件信息
+                        fileInfo.classList.remove('hidden');
+                        incomingFilename.textContent = '文件名：' + data.name;
+                        incomingFilesize.textContent = '文件大小：' + formatFileSize(data.size);
+                        window.fileInfo = data;
+                        // 重置进度条
+                        const progressBar = document.querySelector('#file-info .progress-inner');
+                        const progressText = document.querySelector('#file-info .progress-text');
+                        progressBar.style.width = '0%';
+                        progressText.textContent = '等待接收...';
+                        // 重置接收状态
+                        window.receivedChunks = [];
+                        window.expectedChunks = 0;
+                    } else if (data.type === 'file-chunk') {
+                        // 接收文件块
+                        window.receivedChunks[data.chunk] = data.data;
+                        window.expectedChunks = data.total;
+
+                        // 计算已接收的块数
+                        const receivedCount = window.receivedChunks.filter(Boolean).length;
+
+                        // 更新进度
+                        const progress = (receivedCount / data.total) * 100;
+                        const progressBar = document.querySelector('#file-info .progress-inner');
+                        const progressText = document.querySelector('#file-info .progress-text');
+
+                        progressBar.style.width = progress + '%';
+                        progressText.textContent = `正在接收... ${progress.toFixed(1)}% (${receivedCount}/${data.total})`;
+                    } else if (data.type === 'file-complete') {
+                        // 检查是否所有块都已接收
+                        const receivedCount = window.receivedChunks.filter(Boolean).length;
+                        if (receivedCount === window.expectedChunks) {
+                            // 文件接收完成
+                            const blob = new Blob(window.receivedChunks);
+                            saveFile(blob, window.fileInfo.name);
+
+                            const progressText = document.querySelector('#file-info .progress-text');
+                            progressText.textContent = '接收完成';
+                            showToast('文件接收完成');
+
+                            // 清理接收状态
+                            window.receivedChunks = [];
+                            window.expectedChunks = 0;
                         } else {
-                            // 小文件直接合并
-                            completeFile = new Blob(validChunks, { type: fileInfo.type });
+                            // 如果有缺失的块，显示错误
+                            const progressText = document.querySelector('#file-info .progress-text');
+                            progressText.textContent = '接收失败：文件不完整';
+                            showToast('文件接收失败：数据不完整');
                         }
-
-                        const mergeTime = (Date.now() - mergeStartTime) / 1000;
-                        addDebugInfo(`文件合并完成，耗时: ${mergeTime.toFixed(2)}秒`);
-
-                        // 创建下载URL
-                        if (downloadUrl) {
-                            URL.revokeObjectURL(downloadUrl);
-                        }
-                        downloadUrl = URL.createObjectURL(completeFile);
-
-                        // 使用原始文件名创建下载链接
-                        const fileName = fileInfo.originalName || fileInfo.name;
-
-                        // 更新下载按钮
-                        autoDownloadBtn.href = downloadUrl;
-                        autoDownloadBtn.download = fileName;
-                        autoDownloadBtn.style.display = 'inline-block';
-
-                        // 显示手动保存按钮
-                        manualSaveBtn.style.display = 'inline-block';
-                        manualSaveBtn.onclick = function () {
-                            try {
-                                saveAs(completeFile, fileName);
-                                addDebugInfo(`手动保存文件: ${fileName}`);
-                            } catch (e) {
-                                console.error('手动保存文件失败:', e);
-                                addDebugInfo(`手动保存文件失败: ${e.message}`);
-                            }
-                        };
-
-                        // 显示替代保存按钮
-                        altSaveBtn.style.display = 'inline-block';
-                        altSaveBtn.onclick = function () {
-                            try {
-                                // 创建一个新的a元素并触发点击
-                                const a = document.createElement('a');
-                                a.href = downloadUrl;
-                                a.download = fileName;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                addDebugInfo(`替代方法保存文件: ${fileName}`);
-                            } catch (e) {
-                                console.error('替代保存方法失败:', e);
-                                addDebugInfo(`替代保存方法失败: ${e.message}`);
-                            }
-                        };
-
-                        // 隐藏强制完成按钮
-                        forceCompleteBtn.style.display = 'none';
-
-                        // 移除处理中消息
-                        if (processingMessage.parentNode) {
-                            processingMessage.parentNode.removeChild(processingMessage);
-                        }
-
-                        // 尝试自动下载
-                        try {
-                            setTimeout(() => {
-                                autoDownloadBtn.click();
-                                console.log('自动下载已触发');
-                                addDebugInfo('自动下载已触发');
-                            }, 1000);
-                        } catch (e) {
-                            console.error('自动下载失败:', e);
-                            addDebugInfo(`自动下载失败: ${e.message}`);
-                        }
-                    } catch (e) {
-                        console.error('合并文件时出错:', e);
-                        addDebugInfo(`合并文件时出错: ${e.message}`);
-
-                        // 移除处理中消息
-                        if (processingMessage.parentNode) {
-                            processingMessage.parentNode.removeChild(processingMessage);
-                        }
-
-                        // 显示错误消息
-                        const errorMessage = document.createElement('div');
-                        errorMessage.className = 'error';
-                        errorMessage.textContent = `文件处理失败: ${e.message}`;
-                        downloadContainer.insertBefore(errorMessage, downloadContainer.firstChild);
                     }
+                });
 
-                    // 清除自动检测计时器
-                    if (autoDetectTimer) {
-                        clearTimeout(autoDetectTimer);
-                        autoDetectTimer = null;
+                // 接受文件按钮点击事件
+                acceptFile.addEventListener('click', () => {
+                    if (window.conn) {
+                        // 重置进度条状态
+                        const progressBar = document.querySelector('#file-info .progress-inner');
+                        const progressText = document.querySelector('#file-info .progress-text');
+                        progressBar.style.width = '0%';
+                        progressText.textContent = '准备接收...';
+
+                        // 发送准备接收信号
+                        window.conn.send({ type: 'ready' });
+
+                        // 禁用接受和拒绝按钮
+                        acceptFile.disabled = true;
+                        rejectFile.disabled = true;
                     }
+                });
 
-                    // 清理内存
-                    setTimeout(() => {
-                        // 释放不再需要的内存
-                        receivedChunks = null;
-                        // 强制垃圾回收（虽然不能直接调用，但可以帮助提示）
-                        if (window.gc) window.gc();
-                    }, 5000);
-
-                }, 100); // 短暂延迟让UI更新
-
-            } catch (e) {
-                console.error('完成文件接收时出错:', e);
-                addDebugInfo(`完成文件接收时出错: ${e.message}`);
-            }
-        }
-
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' bytes';
-            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            else return (bytes / 1048576).toFixed(1) + ' MB';
-        }
-
-        // 手动保存文件
-        manualSaveBtn.addEventListener('click', () => {
-            if (downloadUrl && fileInfo) {
-                try {
-                    const a = document.createElement('a');
-                    a.href = downloadUrl;
-                    // 使用原始文件名
-                    a.download = fileInfo.originalName || fileInfo.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-
-                    addDebugInfo('手动触发文件下载');
-                } catch (e) {
-                    addDebugInfo(`手动下载失败: ${e.message}`);
-                    alert('下载失败，请尝试备用保存方法');
-                }
-            }
-        });
-
-        // 备用保存方法
-        altSaveBtn.addEventListener('click', () => {
-            if (receivedChunks.length > 0 && fileInfo) {
-                try {
-                    addDebugInfo('使用备用方法保存文件...');
-
-                    // 重新创建Blob对象
-                    const blob = new Blob(receivedChunks, { type: fileInfo.type || 'application/octet-stream' });
-
-                    // 使用FileSaver.js的方法保存文件，确保使用原始文件名
-                    saveAs(blob, fileInfo.originalName || fileInfo.name);
-
-                    addDebugInfo('备用保存方法执行完成');
-                } catch (e) {
-                    addDebugInfo(`备用保存方法失败: ${e.message}`);
-
-                    // 如果FileSaver.js不可用，尝试使用navigator.msSaveBlob (IE/Edge)
-                    try {
-                        if (window.navigator && window.navigator.msSaveBlob) {
-                            const blob = new Blob(receivedChunks, { type: fileInfo.type || 'application/octet-stream' });
-                            window.navigator.msSaveOrOpenBlob(blob, fileInfo.originalName || fileInfo.name);
-                            addDebugInfo('使用msSaveOrOpenBlob保存成功');
-                        } else {
-                            throw new Error('备用方法不可用');
-                        }
-                    } catch (e2) {
-                        addDebugInfo(`所有保存方法都失败: ${e2.message}`);
-                        alert('无法保存文件，请尝试使用不同的浏览器');
+                // 拒绝文件按钮点击事件
+                rejectFile.addEventListener('click', () => {
+                    if (window.conn) {
+                        window.conn.close();
                     }
-                }
+                    // 重置所有状态
+                    fileInfo.classList.add('hidden');
+                    window.receivedChunks = [];
+                    window.expectedChunks = 0;
+                    // 重置按钮状态
+                    acceptFile.disabled = false;
+                    rejectFile.disabled = false;
+                });
+            }
+
+            // 保存文件
+            function saveFile(blob, fileName) {
+                saveAs(blob, fileName);
             }
         });
-
-        // 添加FileSaver.js库
-        function loadFileSaverScript() {
-            if (typeof saveAs === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js';
-                script.async = true;
-                document.body.appendChild(script);
-                addDebugInfo('加载FileSaver.js库');
-            }
-        }
-
-        // 页面加载时加载FileSaver.js
-        loadFileSaverScript();
-
-        // 在页面关闭前清理资源
-        window.addEventListener('beforeunload', () => {
-            // 清理连接
-            if (peer) {
-                peer.destroy();
-            }
-
-            // 释放URL对象
-            if (downloadUrl) {
-                URL.revokeObjectURL(downloadUrl);
-            }
-
-            // 停止视频流
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-        });
-
-        // 强制完成文件接收
-        forceCompleteBtn.addEventListener('click', function () {
-            if (receivedChunks.length > 0) {
-                addDebugInfo('用户强制完成文件接收');
-                completeFileReception();
-            } else {
-                addDebugInfo('没有接收到任何数据，无法完成');
-            }
-        });
-
-        // 在 script 标签中添加以下函数
-        function showToast(message) {
-            // 先移除可能存在的旧 toast
-            const existingToast = document.querySelector('.toast');
-            if (existingToast) {
-                document.body.removeChild(existingToast);
-            }
-
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            // 确保 toast 样式正确应用
-            toast.style.position = 'fixed';
-            toast.style.top = '20px';
-            toast.style.right = '20px';
-            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-            toast.style.color = 'white';
-            toast.style.padding = '12px 24px';
-            toast.style.borderRadius = '4px';
-            toast.style.zIndex = '1000';
-            toast.style.animation = 'fadeInOut 3s ease';
-            toast.style.pointerEvents = 'none';
-
-            // 3秒后自动移除
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    document.body.removeChild(toast);
-                }
-            }, 3000);
-        }
-
-        // 添加动画样式
-        const style = document.createElement('style');
-        style.textContent = `
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
-        }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 
