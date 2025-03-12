@@ -58,28 +58,29 @@
         /* 按钮样式 */
         .btn {
             cursor: pointer;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: bold;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-right: 5px;
-            margin-bottom: 5px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .btn:active {
-            transform: translateY(0);
+            transform: scale(0.98);
         }
 
         .primary-btn {
             background-color: #3498db;
             color: white;
             text-decoration: none;
-            display: inline-block;
         }
 
         .primary-btn:hover {
@@ -131,15 +132,16 @@
         .progress-bar-container {
             width: 100%;
             height: 20px;
-            background-color: #ecf0f1;
+            background-color: #f5f6fa;
             border-radius: 10px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 15px 0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .progress-bar {
             height: 100%;
-            background-color: #3498db;
+            background: linear-gradient(90deg, #3498db, #2980b9);
             width: 0%;
             transition: width 0.3s ease;
         }
@@ -148,6 +150,8 @@
             text-align: center;
             font-weight: bold;
             color: #2c3e50;
+            margin-top: 5px;
+            font-size: 14px;
         }
 
         /* 信息框 */
@@ -166,16 +170,27 @@
             padding: 15px;
             margin: 15px 0;
             border: 1px solid #a3e4d7;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .file-details {
             margin-bottom: 15px;
+            word-break: break-all;
+            /* 确保长文件名可以换行 */
         }
 
+        .file-details p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        /* 下载按钮容器 */
         .download-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            justify-content: center;
         }
 
         /* 调试信息 */
@@ -208,19 +223,89 @@
                 padding: 15px;
             }
 
+            .download-box {
+                padding: 12px;
+                margin: 10px 0;
+            }
+
+            .file-details {
+                font-size: 14px;
+            }
+
+            .file-details p {
+                margin: 6px 0;
+            }
+
             .download-buttons {
                 flex-direction: column;
+                gap: 8px;
             }
 
             .btn {
                 width: 100%;
-                margin-right: 0;
+                margin: 0;
+                padding: 15px;
+                font-size: 16px;
+                height: auto;
+                min-height: 50px;
+            }
+
+            /* 增加按钮之间的触摸区域 */
+            .btn+.btn {
+                margin-top: 8px;
+            }
+
+            /* 调整按钮文字大小 */
+            .btn {
+                font-size: 15px;
             }
         }
 
         /* 隐藏元素 */
         .hidden {
             display: none !important;
+        }
+
+        /* Toast 提示样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            z-index: 1000;
+            animation: fadeInOut 3s ease;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            10% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            90% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* 添加图标支持 */
+        .btn i {
+            margin-right: 8px;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -345,13 +430,6 @@
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
-    <!-- 添加通知音效 -->
-    <audio id="notification-sound" preload="auto">
-        <source
-            src="https://cdn.jsdelivr.net/gh/freeCodeCamp/cdn@master/build/testable-projects-fcc/audio/BeepSound.wav"
-            type="audio/wav">
-    </audio>
 
     <script>
         // 全局变量
@@ -480,6 +558,11 @@
         document.getElementById('btn-receive-mode').addEventListener('click', () => {
             modeSelector.classList.add('hidden');
             receivePanel.classList.remove('hidden');
+
+            // 自动聚焦到输入框
+            setTimeout(() => {
+                connectionIdInput.focus();
+            }, 100);
         });
 
         // 文件选择处理
@@ -488,7 +571,7 @@
             if (!file) return;
 
             if (file.size > 100 * 1024 * 1024) {
-                alert('文件大小超过100MB限制');
+                showToast('文件大小超过100MB限制');
                 fileInput.value = '';
                 return;
             }
@@ -496,6 +579,9 @@
             fileToSend = file;
             fileInfoDisplay.textContent = `文件: ${file.name} (${formatFileSize(file.size)})`;
             createLinkBtn.disabled = false;
+
+            // 自动点击创建连接按钮
+            createLinkBtn.click();
         });
 
         // 创建连接
@@ -585,6 +671,14 @@
                             peerIdDisplay.textContent = enhancedId;
                             addDebugInfo(`创建包含文件扩展名的连接ID: ${enhancedId}`);
 
+                            // 自动复制连接ID
+                            navigator.clipboard.writeText(enhancedId).then(() => {
+                                showToast('连接ID已自动复制到剪贴板');
+                            }).catch(err => {
+                                console.error('复制失败:', err);
+                                showToast('连接ID复制失败，请手动复制');
+                            });
+
                             // 在后台存储完整的文件信息，用于后续传输
                             window.completeFileInfo = {
                                 name: fileToSend.name,
@@ -601,17 +695,25 @@
                             console.error('创建增强连接ID失败:', e);
                             // 回退到普通ID
                             peerIdDisplay.textContent = id;
-                            QRCode.toCanvas(document.getElementById('qrcode'), id, {
-                                width: 200,
-                                margin: 1
+
+                            // 自动复制普通ID
+                            navigator.clipboard.writeText(id).then(() => {
+                                showToast('连接ID已自动复制到剪贴板');
+                            }).catch(err => {
+                                console.error('复制失败:', err);
+                                showToast('连接ID复制失败，请手动复制');
                             });
                         }
                     } else {
                         // 普通ID显示
                         peerIdDisplay.textContent = id;
-                        QRCode.toCanvas(document.getElementById('qrcode'), id, {
-                            width: 200,
-                            margin: 1
+
+                        // 自动复制普通ID
+                        navigator.clipboard.writeText(id).then(() => {
+                            showToast('连接ID已自动复制到剪贴板');
+                        }).catch(err => {
+                            console.error('复制失败:', err);
+                            showToast('连接ID复制失败，请手动复制');
                         });
                     }
 
@@ -785,8 +887,7 @@
                     } else {
                         console.log(`文件发送完成: 总共发送 ${chunkCount} 块, ${formatFileSize(offset)} 数据`);
                         sendStatus.textContent = '文件发送完成!';
-                        playNotificationSound();
-                        showNotification('文件发送完成', `文件 ${file.name} 已成功发送`);
+                        showToast('文件发送完成！');
                     }
                 } catch (err) {
                     console.error('发送文件块错误:', err);
@@ -1664,85 +1765,6 @@
             else return (bytes / 1048576).toFixed(1) + ' MB';
         }
 
-        // 播放通知声音
-        function playNotificationSound() {
-            const sound = document.getElementById('notification-sound');
-            sound.currentTime = 0;
-            sound.play().catch(e => console.log('无法播放通知声音:', e));
-        }
-
-        // 显示浏览器通知
-        function showNotification(title, body) {
-            // 检查浏览器是否支持通知
-            if (!("Notification" in window)) {
-                console.log("此浏览器不支持通知");
-                return;
-            }
-
-            // 检查通知权限
-            if (Notification.permission === "granted") {
-                // 创建通知
-                new Notification(title, { body: body });
-            } else if (Notification.permission !== "denied") {
-                // 请求权限
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        new Notification(title, { body: body });
-                    }
-                });
-            }
-        }
-
-        // 获取更友好的文件类型显示
-        function getFriendlyFileType(mimeType, fileName) {
-            if (!mimeType || mimeType === 'application/octet-stream') {
-                // 尝试从文件扩展名获取类型
-                const extension = fileName.split('.').pop().toLowerCase();
-                switch (extension) {
-                    case 'pdf': return 'PDF文档';
-                    case 'doc':
-                    case 'docx': return 'Word文档';
-                    case 'xls':
-                    case 'xlsx': return 'Excel表格';
-                    case 'ppt':
-                    case 'pptx': return 'PowerPoint演示文稿';
-                    case 'jpg':
-                    case 'jpeg': return 'JPEG图片';
-                    case 'png': return 'PNG图片';
-                    case 'gif': return 'GIF图片';
-                    case 'mp3': return 'MP3音频';
-                    case 'mp4': return 'MP4视频';
-                    case 'zip': return 'ZIP压缩文件';
-                    case 'rar': return 'RAR压缩文件';
-                    case 'txt': return '文本文件';
-                    default: return `${extension.toUpperCase()}文件`;
-                }
-            }
-
-            // 处理常见MIME类型
-            if (mimeType.startsWith('image/')) {
-                return mimeType.replace('image/', '').toUpperCase() + '图片';
-            } else if (mimeType.startsWith('video/')) {
-                return mimeType.replace('video/', '').toUpperCase() + '视频';
-            } else if (mimeType.startsWith('audio/')) {
-                return mimeType.replace('audio/', '').toUpperCase() + '音频';
-            } else if (mimeType === 'application/pdf') {
-                return 'PDF文档';
-            } else if (mimeType.includes('spreadsheetml') || mimeType.includes('excel')) {
-                return 'Excel表格';
-            } else if (mimeType.includes('wordprocessingml') || mimeType.includes('document')) {
-                return 'Word文档';
-            } else if (mimeType.includes('presentationml') || mimeType.includes('powerpoint')) {
-                return 'PowerPoint演示文稿';
-            } else if (mimeType.includes('zip') || mimeType.includes('compressed')) {
-                return '压缩文件';
-            } else if (mimeType === 'text/plain') {
-                return '文本文件';
-            }
-
-            return mimeType;
-        }
-
         // 手动保存文件
         manualSaveBtn.addEventListener('click', () => {
             if (downloadUrl && fileInfo) {
@@ -1837,6 +1859,51 @@
                 addDebugInfo('没有接收到任何数据，无法完成');
             }
         });
+
+        // 在 script 标签中添加以下函数
+        function showToast(message) {
+            // 先移除可能存在的旧 toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                document.body.removeChild(existingToast);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // 确保 toast 样式正确应用
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1000';
+            toast.style.animation = 'fadeInOut 3s ease';
+            toast.style.pointerEvents = 'none';
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 
