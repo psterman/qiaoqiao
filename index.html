@@ -845,7 +845,36 @@
             animation: slideDown 0.3s ease;
         }
 
-        /* ... existing code ... */
+        .share-info {
+            margin-top: 20px;
+        }
+
+        .share-link,
+        .verification-code {
+            margin-bottom: 16px;
+        }
+
+        .share-link label,
+        .verification-code label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .verification-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .verification-form input {
+            flex: 1;
+        }
+
+        .verification-form button {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -919,25 +948,51 @@
                     </svg>
                 </div>
                 <div class="status-text">
-                    <h3>连接信息</h3>
-                    <p>请让接收方输入以下连接ID</p>
+                    <h3>分享链接</h3>
+                    <p>复制以下链接和验证码分享给接收方</p>
                 </div>
             </div>
 
-            <div class="connection-id">
-                <div class="id-display">
-                    <span id="peer-id"></span>
-                    <button class="copy-button" id="copy-id">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path
-                                d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        复制ID
-                    </button>
+            <div class="share-info">
+                <div class="share-link">
+                    <label>分享链接</label>
+                    <div class="id-display">
+                        <span id="share-url"></span>
+                        <button class="copy-button" id="copy-url">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path
+                                    d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            复制链接
+                        </button>
+                    </div>
+                </div>
+                <div class="verification-code">
+                    <label>验证码</label>
+                    <div class="id-display">
+                        <span id="verification-code"></span>
+                        <button class="copy-button" id="copy-code">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path
+                                    d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            复制验证码
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -952,9 +1007,9 @@
 
     <div class="card hidden" id="receive-panel">
         <h2>接收文件</h2>
-        <div class="connection-form">
-            <input type="text" id="connection-id-input" placeholder="输入连接ID">
-            <button id="connect-button">连接</button>
+        <div class="verification-form">
+            <input type="text" id="verification-input" placeholder="请输入验证码">
+            <button id="verify-button" class="primary-btn">验证并下载</button>
         </div>
 
         <div class="download-box hidden" id="file-info">
@@ -970,8 +1025,8 @@
                 <p class="progress-text">等待文件传输...</p>
             </div>
             <div class="download-buttons">
-                <button id="accept-file" class="primary-btn">接收文件</button>
-                <button id="reject-file" class="warning-btn">拒绝</button>
+                <button id="accept-file" class="primary-btn">开始下载</button>
+                <button id="reject-file" class="warning-btn">取消</button>
             </div>
         </div>
     </div>
@@ -1039,13 +1094,6 @@
             });
 
             // 处理文件选择
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFileSelect(e.target.files[0]);
-                }
-            });
-
-            // 处理文件选择
             function handleFileSelect(file) {
                 // 检查文件大小（100MB限制）
                 if (file.size > 100 * 1024 * 1024) {
@@ -1064,26 +1112,59 @@
                 // 初始化连接
                 if (!window.peer) {
                     console.log('Initializing new Peer connection');
-                    window.peer = new Peer({
-                        debug: 2
-                    });
-
-                    window.peer.on('open', function (id) {
-                        console.log('My peer ID is: ' + id);
-                        document.getElementById('peer-id').textContent = id;
-                    });
-
-                    window.peer.on('connection', function (conn) {
-                        console.log('Incoming connection from:', conn.peer);
-                        handleConnection(conn);
-                    });
-
-                    window.peer.on('error', function (err) {
-                        console.error('PeerJS error:', err);
-                        showToast('连接错误：' + err.message);
-                    });
+                    initializePeer();
+                } else {
+                    // 如果已经有连接，重新生成验证码
+                    generateShareInfo(window.peer.id);
                 }
             }
+
+            // 初始化 PeerJS 连接
+            function initializePeer() {
+                window.peer = new Peer({
+                    debug: 2
+                });
+
+                window.peer.on('open', function (id) {
+                    console.log('My peer ID is: ' + id);
+                    generateShareInfo(id);
+                });
+
+                window.peer.on('connection', function (conn) {
+                    console.log('Incoming connection from:', conn.peer);
+                    handleConnection(conn);
+                });
+
+                window.peer.on('error', function (err) {
+                    console.error('PeerJS error:', err);
+                    showToast('连接错误：' + err.message);
+                });
+            }
+
+            // 生成分享信息
+            function generateShareInfo(peerId) {
+                // 生成6位随机验证码
+                const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+                // 生成分享链接
+                const shareUrl = `${window.location.origin}${window.location.pathname}?id=${peerId}`;
+
+                // 显示分享信息
+                document.getElementById('share-url').textContent = shareUrl;
+                document.getElementById('verification-code').textContent = verificationCode;
+
+                // 存储验证码
+                window.verificationCode = verificationCode;
+
+                console.log('Share info generated:', { shareUrl, verificationCode });
+            }
+
+            // 文件输入事件监听
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
 
             // 更新文件预览
             function updateFilePreview(file) {
@@ -1201,7 +1282,31 @@
 
                 conn.on('data', (data) => {
                     console.log('Received:', data);
-                    if (data.type === 'ready') {
+                    if (data.type === 'verify') {
+                        // 验证码检查
+                        const isValid = data.code === window.verificationCode;
+                        conn.send({
+                            type: 'verify-result',
+                            success: isValid
+                        });
+
+                        if (isValid) {
+                            showToast('验证成功');
+                            // 发送文件信息
+                            const file = window.fileToSend;
+                            conn.send({
+                                type: 'file-info',
+                                name: file.name,
+                                size: file.size,
+                                fileType: file.type
+                            });
+                            // 准备发送文件
+                            prepareFileTransfer(file);
+                        } else {
+                            showToast('验证码错误');
+                            conn.close();
+                        }
+                    } else if (data.type === 'ready') {
                         // 开始发送文件
                         startFileTransfer();
                     }
@@ -1270,112 +1375,144 @@
                 sendNextChunk();
             }
 
-            // 复制连接ID
-            copyIdBtn.addEventListener('click', () => {
-                const id = peerId.textContent;
-                navigator.clipboard.writeText(id).then(() => {
-                    showToast('连接ID已复制');
+            // 复制分享链接
+            document.getElementById('copy-url').addEventListener('click', () => {
+                const url = document.getElementById('share-url').textContent;
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('分享链接已复制');
                 }).catch(err => {
                     console.error('Failed to copy:', err);
                     showToast('复制失败');
                 });
             });
 
-            // 显示Toast提示
-            function showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.textContent = message;
-                document.body.appendChild(toast);
-
-                // 3秒后移除
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-            }
-
-            // 接收端功能
-            const connectButton = document.getElementById('connect-button');
-            const connectionIdInput = document.getElementById('connection-id-input');
-            const fileInfo = document.getElementById('file-info');
-            const incomingFilename = document.getElementById('incoming-filename');
-            const incomingFilesize = document.getElementById('incoming-filesize');
-            const acceptFile = document.getElementById('accept-file');
-            const rejectFile = document.getElementById('reject-file');
-
-            // 连接按钮点击事件
-            connectButton.addEventListener('click', () => {
-                const targetId = connectionIdInput.value.trim();
-                if (!targetId) {
-                    showToast('请输入连接ID');
-                    return;
-                }
-                connectToPeer(targetId);
+            // 复制验证码
+            document.getElementById('copy-code').addEventListener('click', () => {
+                const code = document.getElementById('verification-code').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast('验证码已复制');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    showToast('复制失败');
+                });
             });
 
-            // 连接到对等端
-            function connectToPeer(targetId) {
+            // 处理URL参数
+            function handleUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+
+                if (id) {
+                    // 自动切换到接收模式
+                    modeSelector.classList.add('hidden');
+                    receivePanel.classList.remove('hidden');
+                    window.peerId = id;
+                }
+            }
+
+            // 验证并连接
+            document.getElementById('verify-button').addEventListener('click', () => {
+                const verificationInput = document.getElementById('verification-input');
+                const code = verificationInput.value.trim().toUpperCase();
+
+                if (!code) {
+                    showToast('请输入验证码');
+                    return;
+                }
+
+                if (!window.peerId) {
+                    showToast('无效的连接ID');
+                    return;
+                }
+
+                showToast('正在连接...');
+                connectToPeer(window.peerId, code);
+            });
+
+            // 修改连接逻辑
+            function connectToPeer(targetId, verificationCode) {
                 if (!window.peer) {
                     window.peer = new Peer({
                         debug: 2
                     });
 
                     window.peer.on('open', () => {
-                        initiateConnection(targetId);
+                        initiateConnection(targetId, verificationCode);
+                    });
+
+                    window.peer.on('error', (err) => {
+                        console.error('Peer connection error:', err);
+                        showToast('连接错误：' + err.message);
                     });
                 } else {
-                    initiateConnection(targetId);
+                    initiateConnection(targetId, verificationCode);
                 }
             }
 
             // 初始化连接
-            function initiateConnection(targetId) {
+            function initiateConnection(targetId, verificationCode) {
+                console.log('Initiating connection to:', targetId);
                 window.conn = window.peer.connect(targetId);
                 window.receivedChunks = [];
                 window.expectedChunks = 0;
 
                 window.conn.on('open', () => {
                     console.log('Connected to:', targetId);
-                    showToast('连接成功');
+                    showToast('连接已建立');
+                    // 发送验证码
+                    window.conn.send({
+                        type: 'verify',
+                        code: verificationCode
+                    });
                 });
 
                 window.conn.on('data', (data) => {
-                    if (data.type === 'file-info') {
+                    console.log('Received data:', data.type);
+                    if (data.type === 'verify-result') {
+                        if (data.success) {
+                            showToast('验证成功');
+                            // 显示文件信息面板
+                            document.getElementById('file-info').classList.remove('hidden');
+                        } else {
+                            showToast('验证码错误');
+                            window.conn.close();
+                        }
+                    } else if (data.type === 'file-info') {
                         // 显示文件信息
+                        const fileInfo = document.getElementById('file-info');
                         fileInfo.classList.remove('hidden');
-                        incomingFilename.textContent = '文件名：' + data.name;
-                        incomingFilesize.textContent = '文件大小：' + formatFileSize(data.size);
+                        document.getElementById('incoming-filename').textContent = '文件名：' + data.name;
+                        document.getElementById('incoming-filesize').textContent = '文件大小：' + formatFileSize(data.size);
                         window.fileInfo = data;
-                        // 重置进度条
+
+                        // 重置进度条和接收状态
                         const progressBar = document.querySelector('#file-info .progress-inner');
                         const progressText = document.querySelector('#file-info .progress-text');
                         progressBar.style.width = '0%';
                         progressText.textContent = '等待接收...';
-                        // 重置接收状态
                         window.receivedChunks = [];
                         window.expectedChunks = 0;
+
+                        // 准备接收文件
+                        window.conn.send({ type: 'ready' });
                     } else if (data.type === 'file-chunk') {
                         // 接收文件块
                         window.receivedChunks[data.chunk] = data.data;
                         window.expectedChunks = data.total;
 
-                        // 计算已接收的块数
-                        const receivedCount = window.receivedChunks.filter(Boolean).length;
-
                         // 更新进度
+                        const receivedCount = window.receivedChunks.filter(Boolean).length;
                         const progress = (receivedCount / data.total) * 100;
                         const progressBar = document.querySelector('#file-info .progress-inner');
                         const progressText = document.querySelector('#file-info .progress-text');
-
                         progressBar.style.width = progress + '%';
-                        progressText.textContent = `正在接收... ${progress.toFixed(1)}% (${receivedCount}/${data.total})`;
+                        progressText.textContent = `正在接收... ${progress.toFixed(1)}%`;
                     } else if (data.type === 'file-complete') {
-                        // 检查是否所有块都已接收
                         const receivedCount = window.receivedChunks.filter(Boolean).length;
                         if (receivedCount === window.expectedChunks) {
-                            // 文件接收完成
+                            // 文件接收完成，创建Blob并下载
                             const blob = new Blob(window.receivedChunks);
-                            saveFile(blob, window.fileInfo.name);
+                            saveAs(blob, window.fileInfo.name);
 
                             const progressText = document.querySelector('#file-info .progress-text');
                             progressText.textContent = '接收完成';
@@ -1385,7 +1522,6 @@
                             window.receivedChunks = [];
                             window.expectedChunks = 0;
                         } else {
-                            // 如果有缺失的块，显示错误
                             const progressText = document.querySelector('#file-info .progress-text');
                             progressText.textContent = '接收失败：文件不完整';
                             showToast('文件接收失败：数据不完整');
@@ -1393,43 +1529,47 @@
                     }
                 });
 
-                // 接受文件按钮点击事件
-                acceptFile.addEventListener('click', () => {
-                    if (window.conn) {
-                        // 重置进度条状态
-                        const progressBar = document.querySelector('#file-info .progress-inner');
-                        const progressText = document.querySelector('#file-info .progress-text');
-                        progressBar.style.width = '0%';
-                        progressText.textContent = '准备接收...';
-
-                        // 发送准备接收信号
-                        window.conn.send({ type: 'ready' });
-
-                        // 禁用接受和拒绝按钮
-                        acceptFile.disabled = true;
-                        rejectFile.disabled = true;
-                    }
+                window.conn.on('close', () => {
+                    console.log('Connection closed');
+                    showToast('连接已关闭');
                 });
 
-                // 拒绝文件按钮点击事件
-                rejectFile.addEventListener('click', () => {
-                    if (window.conn) {
-                        window.conn.close();
-                    }
-                    // 重置所有状态
-                    fileInfo.classList.add('hidden');
-                    window.receivedChunks = [];
-                    window.expectedChunks = 0;
-                    // 重置按钮状态
-                    acceptFile.disabled = false;
-                    rejectFile.disabled = false;
+                window.conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    showToast('连接错误：' + err.message);
                 });
             }
 
-            // 保存文件
-            function saveFile(blob, fileName) {
-                saveAs(blob, fileName);
+            // 添加开始下载和取消按钮的事件监听
+            document.getElementById('accept-file').addEventListener('click', () => {
+                if (window.conn) {
+                    window.conn.send({ type: 'ready' });
+                    showToast('开始接收文件...');
+                }
+            });
+
+            document.getElementById('reject-file').addEventListener('click', () => {
+                if (window.conn) {
+                    window.conn.close();
+                }
+                document.getElementById('file-info').classList.add('hidden');
+                document.getElementById('verification-input').value = '';
+                showToast('已取消接收');
+            });
+
+            // 添加显示提示消息的函数
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
             }
+
+            // 页面加载时处理URL参数
+            handleUrlParams();
         });
     </script>
 </body>
