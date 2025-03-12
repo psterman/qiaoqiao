@@ -875,6 +875,33 @@
         .verification-form button {
             white-space: nowrap;
         }
+
+        /* 添加移动端检测和优化代码 */
+        .mobile-tips {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .mobile-tips li {
+            margin-bottom: 8px;
+        }
+
+        /* 优化按钮触摸区域 */
+        button,
+        .btn {
+            min-height: 44px;
+            margin: 5px 0;
+        }
+
+        /* 优化文件信息显示 */
+        .file-details {
+            font-size: 14px;
+        }
+
+        /* 优化进度条显示 */
+        .progress-bar {
+            height: 8px;
+        }
     </style>
 </head>
 
@@ -1045,9 +1072,48 @@
                 console.log('Send mode button clicked');
                 modeSelector.classList.add('hidden');
                 sendPanel.classList.remove('hidden');
-                // 自动触发文件选择对话框
-                document.getElementById('file-input').click();
+
+                // 创建并触发文件选择
+                createAndTriggerFileInput();
             });
+
+            // 添加上传区域点击事件
+            const uploadArea = document.getElementById('upload-area');
+            uploadArea.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                createAndTriggerFileInput();
+            });
+
+            // 新增函数：创建并触发文件选择
+            function createAndTriggerFileInput() {
+                // 创建新的文件输入元素
+                const newFileInput = document.createElement('input');
+                newFileInput.type = 'file';
+                newFileInput.id = 'file-input';
+                newFileInput.className = 'file-input';
+
+                // 添加文件选择事件监听器
+                newFileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFileSelect(e.target.files[0]);
+                    }
+                });
+
+                // 替换原有的文件输入框
+                const oldFileInput = document.getElementById('file-input');
+                oldFileInput.parentNode.replaceChild(newFileInput, oldFileInput);
+
+                // 使用更可靠的方式触发文件选择对话框
+                setTimeout(() => {
+                    const clickEvent = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    newFileInput.dispatchEvent(clickEvent);
+                }, 100);
+            }
 
             // 接收模式按钮点击事件
             btnReceiveMode.addEventListener('click', function () {
@@ -1059,7 +1125,6 @@
             });
 
             // File upload functionality
-            const uploadArea = document.getElementById('upload-area');
             const fileInput = document.getElementById('file-input');
             const filePreview = document.getElementById('file-preview');
             const previewImage = document.getElementById('preview-image');
@@ -1141,19 +1206,19 @@
                 });
             }
 
-            // 生成分享信息
+            // 修改生成分享信息的函数
             function generateShareInfo(peerId) {
-                // 生成6位随机验证码
-                const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                // 生成不带ID的分享链接
+                const shareUrl = `${window.location.origin}${window.location.pathname}`;
 
-                // 生成分享链接
-                const shareUrl = `${window.location.origin}${window.location.pathname}?id=${peerId}`;
+                // 使用 peerId 作为验证码
+                const verificationCode = peerId;
 
                 // 显示分享信息
                 document.getElementById('share-url').textContent = shareUrl;
                 document.getElementById('verification-code').textContent = verificationCode;
 
-                // 存储验证码
+                // 存储当前验证码
                 window.verificationCode = verificationCode;
 
                 console.log('Share info generated:', { shareUrl, verificationCode });
@@ -1196,14 +1261,35 @@
 
             // 移除文件
             removeFileBtn.addEventListener('click', () => {
+                // 重置UI状态
                 filePreview.classList.add('hidden');
                 uploadArea.classList.remove('hidden');
                 connectionInfo.classList.add('hidden');
                 fileInput.value = '';
-                // 如果有连接，关闭它
-                if (window.peer && window.conn) {
-                    window.conn.close();
+
+                // 清理连接和状态
+                if (window.peer) {
+                    if (window.conn) {
+                        window.conn.close();
+                    }
+                    window.peer.destroy();
+                    window.peer = null;
                 }
+
+                // 清理文件相关状态
+                window.fileToSend = null;
+                window.fileChunks = null;
+                window.currentChunk = 0;
+                window.totalChunks = 0;
+
+                // 清理验证码映射
+                if (window.verificationCode) {
+                    window.verificationCode = null;
+                }
+
+                // 返回到选择模式界面
+                sendPanel.classList.add('hidden');
+                modeSelector.classList.remove('hidden');
             });
 
             // 格式化文件大小
@@ -1283,8 +1369,8 @@
                 conn.on('data', (data) => {
                     console.log('Received:', data);
                     if (data.type === 'verify') {
-                        // 验证码检查
-                        const isValid = data.code === window.verificationCode;
+                        // 验证ID是否匹配
+                        const isValid = data.code === window.peer.id;
                         conn.send({
                             type: 'verify-result',
                             success: isValid
@@ -1303,7 +1389,7 @@
                             // 准备发送文件
                             prepareFileTransfer(file);
                         } else {
-                            showToast('验证码错误');
+                            showToast('验证失败');
                             conn.close();
                         }
                     } else if (data.type === 'ready') {
@@ -1358,7 +1444,7 @@
                             // 更新进度
                             const progress = (window.currentChunk + 1) / window.totalChunks * 100;
                             progressInner.style.width = progress + '%';
-                            progressText.textContent = `正在发送... ${progress.toFixed(1)}%`;
+                            progressText.textContent = `正在发送...${progress.toFixed(1)}%`;
 
                             window.currentChunk++;
                             sendNextChunk();
@@ -1413,31 +1499,20 @@
             // 验证并连接
             document.getElementById('verify-button').addEventListener('click', () => {
                 const verificationInput = document.getElementById('verification-input');
-                const code = verificationInput.value.trim().toUpperCase();
+                const peerId = verificationInput.value.trim();
 
-                if (!code) {
-                    showToast('请输入验证码');
+                if (!peerId) {
+                    showToast('请输入连接ID');
                     return;
                 }
 
-                if (!window.peerId) {
-                    showToast('无效的连接ID');
-                    return;
-                }
-
-                showToast('正在连接...');
-                connectToPeer(window.peerId, code);
-            });
-
-            // 修改连接逻辑
-            function connectToPeer(targetId, verificationCode) {
+                // 初始化peer连接（如果还没有初始化）
                 if (!window.peer) {
-                    window.peer = new Peer({
-                        debug: 2
-                    });
+                    window.peer = new Peer();
 
                     window.peer.on('open', () => {
-                        initiateConnection(targetId, verificationCode);
+                        // peer连接成功后尝试连接
+                        connectToPeer(peerId);
                     });
 
                     window.peer.on('error', (err) => {
@@ -1445,12 +1520,13 @@
                         showToast('连接错误：' + err.message);
                     });
                 } else {
-                    initiateConnection(targetId, verificationCode);
+                    // 如果peer已经存在，直接连接
+                    connectToPeer(peerId);
                 }
-            }
+            });
 
-            // 初始化连接
-            function initiateConnection(targetId, verificationCode) {
+            // 修改连接处理函数
+            function connectToPeer(targetId) {
                 console.log('Initiating connection to:', targetId);
                 window.conn = window.peer.connect(targetId);
                 window.receivedChunks = [];
@@ -1459,10 +1535,10 @@
                 window.conn.on('open', () => {
                     console.log('Connected to:', targetId);
                     showToast('连接已建立');
-                    // 发送验证码
+                    // 发送验证请求
                     window.conn.send({
                         type: 'verify',
-                        code: verificationCode
+                        code: targetId
                     });
                 });
 
@@ -1470,11 +1546,11 @@
                     console.log('Received data:', data.type);
                     if (data.type === 'verify-result') {
                         if (data.success) {
-                            showToast('验证成功');
+                            showToast('连接成功');
                             // 显示文件信息面板
                             document.getElementById('file-info').classList.remove('hidden');
                         } else {
-                            showToast('验证码错误');
+                            showToast('连接失败');
                             window.conn.close();
                         }
                     } else if (data.type === 'file-info') {
@@ -1506,7 +1582,7 @@
                         const progressBar = document.querySelector('#file-info .progress-inner');
                         const progressText = document.querySelector('#file-info .progress-text');
                         progressBar.style.width = progress + '%';
-                        progressText.textContent = `正在接收... ${progress.toFixed(1)}%`;
+                        progressText.textContent = `正在接收...${progress.toFixed(1)}%`;
                     } else if (data.type === 'file-complete') {
                         const receivedCount = window.receivedChunks.filter(Boolean).length;
                         if (receivedCount === window.expectedChunks) {
@@ -1570,6 +1646,152 @@
 
             // 页面加载时处理URL参数
             handleUrlParams();
+
+            // 移动端检测函数
+            function isMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // 检测是否在微信浏览器中
+            function isWechat() {
+                return /MicroMessenger/i.test(navigator.userAgent);
+            }
+
+            // 检测是否是iOS设备
+            function isIOS() {
+                return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            }
+
+            // 添加移动端提示信息
+            function addMobileTips() {
+                const tipsHtml = `
+                    <div class="mobile-tips card" style="margin-bottom: 20px;">
+                        <h3 style="color: var(--primary-color);">使用提示</h3>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>请保持页面在前台运行</li>
+                            <li>建议使用WiFi网络传输大文件</li>
+                            <li>传输过程中请勿切换应用或锁屏</li>
+                            ${isIOS() ? '<li>文件下载后需要手动保存到"文件"应用</li>' : ''}
+                            ${isWechat() ? '<li>建议使用系统自带浏览器以获得完整功能</li>' : ''}
+                        </ul>
+                    </div>`;
+                document.querySelector('h1').insertAdjacentHTML('afterend', tipsHtml);
+            }
+
+            // 移动端优化
+            if (isMobile()) {
+                // 添加移动端提示
+                addMobileTips();
+
+                // 调整文件大小限制
+                const maxFileSize = isWechat() ? 20 * 1024 * 1024 : 100 * 1024 * 1024; // 微信内限制20MB，其他50MB
+
+                // 修改文件选择处理
+                function handleFileSelect(file) {
+                    if (file.size > maxFileSize) {
+                        showToast(`文件大小不能超过${maxFileSize / 1024 / 1024}MB`);
+                        return;
+                    }
+                    // ... 原有的文件处理代码 ...
+                }
+
+                // 添加页面可见性监听
+                document.addEventListener('visibilitychange', function () {
+                    if (document.hidden && window.conn) {
+                        showToast('请保持页面在前台运行，避免传输中断');
+                    }
+                });
+
+                // 添加网络状态监听
+                window.addEventListener('online', function () {
+                    if (window.conn && window.conn.disconnected) {
+                        showToast('网络已恢复，正在尝试重新连接...');
+                        // 可以在这里添加重连逻辑
+                    }
+                });
+
+                window.addEventListener('offline', function () {
+                    showToast('网络连接已断开，请检查网络设置');
+                });
+
+                // 优化移动端样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    @media(max-width: 600px) {
+                        body {
+                            padding: 10px;
+                        }
+
+                        .card {
+                            padding: 15px;
+                        }
+
+                        .upload-area {
+                            min-height: 150px;
+                        }
+
+                        .verification-form {
+                            flex-direction: column;
+                        }
+
+                        .verification-form button {
+                            margin-top: 10px;
+                        }
+
+                        .copy-button {
+                            padding: 12px;
+                        }
+
+                        .mobile-tips {
+                            font-size: 14px;
+                            line-height: 1.5;
+                        }
+
+                        .mobile-tips li {
+                            margin-bottom: 8px;
+                        }
+
+                        /* 优化按钮触摸区域 */
+                        button, .btn {
+                            min-height: 44px;
+                            margin: 5px 0;
+                        }
+
+                        /* 优化文件信息显示 */
+                        .file-details {
+                            font-size: 14px;
+                        }
+
+                        /* 优化进度条显示 */
+                        .progress-bar {
+                            height: 8px;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // 优化文件保存
+                function saveFile(blob, fileName) {
+                    if (isIOS()) {
+                        // iOS设备显示特殊提示
+                        showToast('文件下载完成，请点击右上角保存');
+                    }
+                    saveAs(blob, fileName);
+                }
+
+                // 优化Toast提示
+                function showToast(message) {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast';
+                    toast.style.bottom = '20px'; // 移动端显示在底部
+                    toast.style.top = 'auto';
+                    toast.style.left = '50%';
+                    toast.style.transform = 'translateX(-50%)';
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                }
+            }
         });
     </script>
 </body>
