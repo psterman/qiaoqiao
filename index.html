@@ -1105,7 +1105,7 @@
                 oldFileInput.parentNode.replaceChild(newFileInput, oldFileInput);
 
                 // 使用更可靠的方式触发文件选择对话框
-                setTimeout(() => {
+                        setTimeout(() => {
                     const clickEvent = new MouseEvent('click', {
                         view: window,
                         bubbles: true,
@@ -1251,7 +1251,7 @@
                         previewIcon.classList.add('hidden');
                     };
                     reader.readAsDataURL(file);
-                } else {
+            } else {
                     // 其他文件类型显示图标
                     previewImage.classList.add('hidden');
                     previewIcon.classList.remove('hidden');
@@ -1381,7 +1381,7 @@
                             // 发送文件信息
                             const file = window.fileToSend;
                             conn.send({
-                                type: 'file-info',
+                                    type: 'file-info',
                                 name: file.name,
                                 size: file.size,
                                 fileType: file.type
@@ -1396,9 +1396,9 @@
                         // 开始发送文件
                         startFileTransfer();
                     }
-                });
+                        });
 
-                conn.on('close', () => {
+                        conn.on('close', () => {
                     console.log('Connection closed');
                     showToast('连接已关闭');
                 });
