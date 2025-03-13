@@ -15,30 +15,37 @@
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- 添加返回按钮功能 -->
+    <script src="back-button.js"></script>
     <style>
         /* Material Design Variables */
         :root {
-            --primary-color: #0071e3;
-            --primary-dark: #0077ED;
-            --primary-light: #E8F2FF;
-            --accent-color: #2E2E2E;
-            --accent-dark: #1D1D1F;
+            --primary-color: #007AFF;
+            --primary-dark: #0062CC;
+            --primary-light: #E5F1FF;
+            --accent-color: #2C2C2E;
+            --accent-dark: #1C1C1E;
             --error-color: #FF3B30;
-            --text-primary: #1D1D1F;
-            --text-secondary: #86868B;
-            --background: #FBFBFD;
+            --success-color: #34C759;
+            --warning-color: #FF9500;
+            --text-primary: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --background: #F2F2F7;
             --surface: #FFFFFF;
-            --border-color: #D2D2D7;
-            --elevation-1: 0 2px 10px rgba(0, 0, 0, 0.05);
-            --elevation-2: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --elevation-3: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --border-color: #E5E5EA;
+            --elevation-1: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --elevation-2: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.08);
             --border-radius: 12px;
+            --border-radius-large: 16px;
+            --border-radius-xl: 22px;
             --spacing: 20px;
+            --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
         }
 
         /* Base Styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            font-family: var(--font-family);
             line-height: 1.5;
             color: var(--text-primary);
             max-width: 980px;
@@ -52,21 +59,21 @@
         h1,
         h2,
         h3 {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: var(--font-family);
             color: var(--text-primary);
             font-weight: 600;
             letter-spacing: -0.015em;
         }
 
         h1 {
-            font-size: 48px;
+            font-size: 40px;
             text-align: center;
             margin-bottom: calc(var(--spacing) * 2);
             line-height: 1.1;
         }
 
         h2 {
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: var(--spacing);
         }
 
@@ -79,9 +86,9 @@
         /* Card Styles */
         .card {
             background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: calc(var(--spacing) * 2);
-            margin-bottom: calc(var(--spacing) * 2);
+            border-radius: var(--border-radius-large);
+            padding: calc(var(--spacing) * 1.5);
+            margin-bottom: calc(var(--spacing) * 1.5);
             box-shadow: var(--elevation-1);
             border: 1px solid var(--border-color);
             transition: all 0.3s ease;
@@ -91,16 +98,62 @@
             box-shadow: var(--elevation-2);
         }
 
+        /* 添加模式选择按钮的特殊样式 */
+        #mode-selector {
+            text-align: center;
+            padding: calc(var(--spacing) * 2);
+        }
+
+        #mode-selector button {
+            width: 100%;
+            height: 120px;
+            margin: 15px 0;
+            font-size: 24px;
+            border-radius: var(--border-radius-xl);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        #mode-selector button i {
+            font-size: 36px;
+            margin: 0;
+        }
+
+        #mode-selector #btn-send-mode {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #mode-selector #btn-send-mode:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        #mode-selector #btn-receive-mode {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        #mode-selector #btn-receive-mode:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
         /* Button Styles */
         button,
         .btn {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 980px;
-            padding: 12px 24px;
+            border-radius: var(--border-radius-xl);
+            padding: 14px 28px;
             font-size: 17px;
-            font-weight: 400;
+            font-weight: 500;
             letter-spacing: -0.01em;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -108,6 +161,8 @@
             position: relative;
             overflow: hidden;
             text-transform: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         button:hover,
@@ -121,13 +176,28 @@
             transform: scale(0.98);
         }
 
-        #btn-send-mode,
-        #btn-receive-mode {
-            width: 100%;
-            margin: 8px 0;
-            padding: 16px 32px;
-            font-size: 17px;
-            font-weight: 400;
+        .secondary-btn {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+
+        .secondary-btn i {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .warning-btn {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .warning-btn:hover {
+            background-color: #F08200;
         }
 
         /* Input Styles */
@@ -136,7 +206,7 @@
         input[type="file"],
         select {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             margin: 8px 0;
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
@@ -144,6 +214,7 @@
             background: var(--surface);
             transition: all 0.2s ease;
             color: var(--text-primary);
+            font-family: var(--font-family);
         }
 
         input[type="text"]:focus,
@@ -154,175 +225,144 @@
             box-shadow: 0 0 0 3px var(--primary-light);
         }
 
-        /* Progress Bar */
+        /* Upload Area Styles */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius-large);
+            background-color: var(--surface);
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        /* File Preview Styles */
+        .file-item {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            box-shadow: var(--elevation-1);
+        }
+
+        .file-icon {
+            color: var(--primary-color);
+            background: var(--primary-light);
+            border-radius: var(--border-radius);
+            padding: 12px;
+        }
+
+        /* Progress Bar Styles */
         .progress-bar-container {
-            width: 100%;
             height: 6px;
             background-color: var(--primary-light);
             border-radius: 3px;
             overflow: hidden;
-            margin: 16px 0;
         }
 
         .progress-bar {
             height: 100%;
-            background-color: var(--primary-color);
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
             transition: width 0.3s ease;
         }
 
-        .progress-text {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-top: 8px;
-            text-align: center;
-        }
-
         /* Status Messages */
-        .status {
-            padding: 12px 16px;
+        .status-message {
+            padding: 16px;
             border-radius: var(--border-radius);
-            margin: 8px 0;
-            font-weight: 400;
             font-size: 15px;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border: none;
         }
 
-        .connected {
-            background-color: #F5FFF7;
-            color: #1D1D1F;
-            border: 1px solid #34C759;
-        }
-
-        .disconnected {
-            background-color: #FFF5F5;
-            color: #1D1D1F;
-            border: 1px solid var(--error-color);
-        }
-
-        .error {
-            background-color: #FFF5F5;
+        .status-message.error {
+            background: #FFE5E5;
             color: var(--error-color);
-            border: 1px solid var(--error-color);
+        }
+
+        .status-message.success {
+            background: #E5FFE9;
+            color: var(--success-color);
         }
 
         /* Toast Notification */
         .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
             background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.3;
-            z-index: 1000;
-            animation: fadeInOut 3s ease;
-            pointer-events: none;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            height: 36px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        }
-
-        @keyframes fadeInOut {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            10% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            90% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-
-        /* 添加图标支持 */
-        .toast::before {
-            content: 'info';
-            font-family: 'Material Icons';
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        /* File Info Box */
-        .info-box {
-            background-color: var(--primary-light);
-            border-left: none;
-            padding: 16px;
-            margin: 16px 0;
             border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
-        }
-
-        /* Download Box */
-        .download-box {
-            background-color: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 24px;
-            margin: 16px 0;
-            border: 1px solid var(--border-color);
-        }
-
-        .file-details {
-            margin-bottom: 16px;
-        }
-
-        .file-details p {
-            margin: 8px 0;
-            color: var(--text-secondary);
+            padding: 12px 20px;
             font-size: 15px;
+            font-weight: 500;
         }
 
-        /* Debug Box */
-        .debug-box {
-            background-color: var(--surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+        /* History Item Styles */
+        .history-item {
             padding: 16px;
-            margin: 16px 0;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            border-radius: var(--border-radius);
+            margin-bottom: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            box-shadow: var(--elevation-1);
+        }
+
+        .history-status {
             font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: var(--border-radius-xl);
         }
 
-        .debug-entry {
-            padding: 4px 0;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-secondary);
+        .history-status.success {
+            background-color: #E5FFE9;
+            color: var(--success-color);
         }
 
-        /* Responsive Design */
+        .history-status.failed {
+            background-color: #FFE5E5;
+            color: var(--error-color);
+        }
+
+        .history-status.pending {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        /* Mobile Optimization */
         @media (max-width: 600px) {
             body {
                 padding: 16px;
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: var(--border-radius);
+            }
+
+            button,
+            .btn {
+                padding: 12px 24px;
+                font-size: 16px;
             }
 
             h1 {
                 font-size: 32px;
             }
 
-            .card {
-                padding: 20px;
-            }
-
-            button,
-            .btn {
-                padding: 12px 20px;
-                font-size: 16px;
+            .file-item {
+                padding: 12px;
             }
         }
 
@@ -583,7 +623,7 @@
             width: 100%;
             min-height: 200px;
             border: 2px dashed var(--border-color);
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius-large);
             background-color: var(--surface);
             transition: all 0.3s ease;
             cursor: pointer;
@@ -592,7 +632,7 @@
 
         .upload-area:hover {
             border-color: var(--primary-color);
-            background-color: rgba(0, 113, 227, 0.02);
+            background-color: var(--primary-light);
         }
 
         .upload-area.drag-over {
@@ -902,25 +942,290 @@
         .progress-bar {
             height: 8px;
         }
+
+        .files-preview {
+            margin-top: 20px;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .files-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 113, 227, 0.1);
+            border-radius: 8px;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-actions button {
+            padding: 6px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .file-actions button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .file-actions button.remove-file:hover {
+            color: var(--error-color);
+        }
+
+        .files-actions {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .secondary-btn {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .incoming-files-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+
+        .incoming-file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .incoming-file-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-checkbox {
+            margin-right: 12px;
+        }
+
+        .file-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .incoming-file-info {
+            flex: 1;
+        }
+
+        .incoming-file-name {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .incoming-file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .history-item:hover {
+            background-color: rgba(0, 113, 227, 0.05);
+        }
+
+        .history-icon {
+            margin-right: 16px;
+            color: var(--primary-color);
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .history-title {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .history-files {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .history-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .history-status.success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .history-status.failed {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+
+        .history-status.pending {
+            background-color: #E3F2FD;
+            color: #1565C0;
+        }
+
+        /* 添加语言切换按钮样式 */
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--elevation-1);
+            user-select: none;
+        }
+
+        .language-switcher:hover {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: var(--elevation-2);
+        }
+
+        .language-switcher:active {
+            transform: scale(0.98);
+        }
+
+        .language-icon {
+            margin-right: 6px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 600px) {
+            .language-switcher {
+                top: 10px;
+                right: 10px;
+                padding: 4px 10px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- 添加语言切换按钮 -->
+    <div class="language-switcher" id="language-switcher">
+        <span class="language-icon">🌐</span>
+        <span class="language-text">EN</span>
+    </div>
+
     <h1>P2P文件快传</h1>
     <p>通过浏览器直接传输文件，无需服务器中转，支持异地传输。</p>
 
     <div class="card" id="mode-selector">
         <h2>选择模式</h2>
-        <button id="btn-send-mode">发送文件</button>
-        <button id="btn-receive-mode">接收文件</button>
+        <button id="btn-send-mode">
+            <i class="material-icons">upload</i>
+            发送文件
+        </button>
+        <button id="btn-receive-mode">
+            <i class="material-icons">download</i>
+            接收文件
+        </button>
     </div>
 
     <div class="card hidden" id="send-panel">
-        <h2>发送文件</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>发送文件</h2>
+            <button id="send-back-btn" class="secondary-btn" style="margin: 0;" onclick="handleBackButtonClick('send')">
+                <i class="material-icons">arrow_back</i>返回
+            </button>
+        </div>
         <!-- 文件上传区域 -->
         <div class="upload-container">
             <div class="upload-area" id="upload-area">
-                <input type="file" id="file-input" class="file-input">
+                <input type="file" id="file-input" class="file-input" multiple>
                 <div class="upload-content">
                     <div class="upload-icon">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -935,30 +1240,18 @@
                 </div>
             </div>
 
-            <!-- 文件预览区域 -->
-            <div class="file-preview hidden" id="file-preview">
-                <div class="preview-header">
-                    <div class="preview-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </div>
-                    <div class="preview-info">
-                        <h3 id="preview-filename">文件名称</h3>
-                        <p id="preview-filesize">文件大小</p>
-                    </div>
-                    <button class="preview-remove" id="remove-file">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                    </button>
+            <!-- 文件列表预览区域 -->
+            <div class="files-preview hidden" id="files-preview">
+                <div class="files-list" id="files-list">
+                    <!-- 文件列表将在这里动态生成 -->
                 </div>
-                <div class="preview-content">
-                    <img id="preview-image" class="hidden" alt="文件预览">
-                    <div id="preview-icon" class="hidden"></div>
+                <div class="files-actions">
+                    <button id="add-more-files" class="secondary-btn">
+                        <i class="material-icons">add</i>添加更多文件
+                    </button>
+                    <button id="clear-all-files" class="warning-btn">
+                        <i class="material-icons">clear_all</i>清除所有
+                    </button>
                 </div>
             </div>
         </div>
@@ -1033,7 +1326,13 @@
     </div>
 
     <div class="card hidden" id="receive-panel">
-        <h2>接收文件</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>接收文件</h2>
+            <button id="receive-back-btn" class="secondary-btn" style="margin: 0;"
+                onclick="handleBackButtonClick('receive')">
+                <i class="material-icons">arrow_back</i>返回
+            </button>
+        </div>
         <div class="verification-form">
             <input type="text" id="verification-input" placeholder="请输入验证码">
             <button id="verify-button" class="primary-btn">验证并下载</button>
@@ -1041,25 +1340,226 @@
 
         <div class="download-box hidden" id="file-info">
             <div class="file-details">
-                <h3>文件信息</h3>
-                <p id="incoming-filename">文件名：-</p>
-                <p id="incoming-filesize">文件大小：-</p>
+                <h3>待接收文件</h3>
+                <div id="incoming-files-list" class="incoming-files-list">
+                    <!-- 文件列表将在这里动态生成 -->
+                </div>
             </div>
             <div class="progress-container">
                 <div class="progress-bar">
                     <div class="progress-inner" style="width: 0%"></div>
                 </div>
-                <p class="progress-text">等待文件传输...</p>
+                <p class="progress-text">等待选择文件...</p>
             </div>
             <div class="download-buttons">
-                <button id="accept-file" class="primary-btn">开始下载</button>
-                <button id="reject-file" class="warning-btn">取消</button>
+                <button id="select-all" class="secondary-btn">
+                    <i class="material-icons">select_all</i>全选
+                </button>
+                <button id="accept-selected" class="primary-btn">
+                    <i class="material-icons">download</i>下载选中文件
+                </button>
+                <button id="reject-all" class="warning-btn">
+                    <i class="material-icons">close</i>取消
+                </button>
             </div>
         </div>
     </div>
 
+    <div class="card" id="history-panel">
+        <h2>传输历史</h2>
+        <div id="history-list" class="history-list">
+            <!-- 历史记录将在这里动态生成 -->
+        </div>
+    </div>
+
     <script>
+        // 全局函数，处理返回按钮点击
+        function handleBackButtonClick(mode) {
+            console.log(mode + ' back button clicked');
+
+            // 关闭现有的连接
+            if (window.conn) {
+                window.conn.close();
+            }
+
+            // 销毁现有的 peer 连接
+            if (window.peer) {
+                window.peer.destroy();
+                window.peer = null;
+            }
+
+            // 清除所有状态
+            window.filesToSend = null;
+            window.fileChunks = null;
+            window.currentChunk = 0;
+            window.totalChunks = 0;
+
+            if (mode === 'receive') {
+                window.receivedChunks = [];
+                window.expectedChunks = 0;
+            }
+
+            // 隐藏相应的面板并显示模式选择面板
+            if (mode === 'receive') {
+                document.getElementById('receive-panel').classList.add('hidden');
+            } else {
+                document.getElementById('send-panel').classList.add('hidden');
+            }
+
+            document.getElementById('mode-selector').classList.remove('hidden');
+
+            // 重置所有输入和状态显示
+            if (mode === 'receive') {
+                const verificationInput = document.getElementById('verification-input');
+                if (verificationInput) verificationInput.value = '';
+
+                const fileInfo = document.getElementById('file-info');
+                if (fileInfo) fileInfo.classList.add('hidden');
+            } else {
+                const filesPreview = document.getElementById('files-preview');
+                const uploadArea = document.getElementById('upload-area');
+                if (filesPreview) {
+                    filesPreview.classList.add('hidden');
+                    if (uploadArea) uploadArea.classList.remove('hidden');
+                }
+
+                const connectionInfo = document.getElementById('connection-info');
+                if (connectionInfo) connectionInfo.classList.add('hidden');
+            }
+
+            // 重置进度条
+            const progressBars = document.querySelectorAll('.progress-inner');
+            progressBars.forEach(bar => bar.style.width = '0%');
+
+            const progressTexts = document.querySelectorAll('.progress-text');
+            progressTexts.forEach(text => text.textContent = '');
+
+            // 显示提示消息
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '8px';
+            toast.style.zIndex = '9999';
+            toast.style.opacity = '1';
+            toast.textContent = '已返回初始界面';
+            document.body.appendChild(toast);
+
+            // 3秒后移除提示
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            // 添加语言切换功能
+            const languageSwitcher = document.getElementById('language-switcher');
+            const languageText = languageSwitcher.querySelector('.language-text');
+            let currentLanguage = 'zh'; // 默认中文
+
+            // 语言文本映射
+            const translations = {
+                zh: {
+                    title: 'P2P文件快传',
+                    subtitle: '通过浏览器直接传输文件，无需服务器中转，支持异地传输。',
+                    modeTitle: '选择模式',
+                    sendButton: '发送文件',
+                    receiveButton: '接收文件',
+                    uploadText: '拖放文件到这里或点击选择',
+                    uploadHint: '最大支持 100MB',
+                    addMoreFiles: '添加更多文件',
+                    clearAll: '清除所有',
+                    shareTitle: '分享链接',
+                    shareSubtitle: '复制以下链接和验证码分享给接收方',
+                    copyLink: '复制链接',
+                    verificationCode: '验证码',
+                    copyCode: '复制验证码',
+                    preparing: '准备发送...',
+                    sending: '正在发送...',
+                    complete: '发送完成',
+                    verifyDownload: '验证并下载',
+                    waitingFiles: '待接收文件',
+                    selectAll: '全选',
+                    downloadSelected: '下载选中文件',
+                    cancel: '取消',
+                    historyTitle: '传输历史',
+                    success: '成功',
+                    failed: '失败',
+                    pending: '进行中'
+                },
+                en: {
+                    title: 'P2P File Transfer',
+                    subtitle: 'Transfer files directly through browser, no server required, supports remote transfer.',
+                    modeTitle: 'Select Mode',
+                    sendButton: 'Send Files',
+                    receiveButton: 'Receive Files',
+                    uploadText: 'Drop files here or click to select',
+                    uploadHint: 'Max size: 100MB',
+                    addMoreFiles: 'Add More Files',
+                    clearAll: 'Clear All',
+                    shareTitle: 'Share Link',
+                    shareSubtitle: 'Copy the link and verification code to share',
+                    copyLink: 'Copy Link',
+                    verificationCode: 'Verification Code',
+                    copyCode: 'Copy Code',
+                    preparing: 'Preparing...',
+                    sending: 'Sending...',
+                    complete: 'Complete',
+                    verifyDownload: 'Verify & Download',
+                    waitingFiles: 'Files to Receive',
+                    selectAll: 'Select All',
+                    downloadSelected: 'Download Selected',
+                    cancel: 'Cancel',
+                    historyTitle: 'Transfer History',
+                    success: 'Success',
+                    failed: 'Failed',
+                    pending: 'Pending'
+                }
+            };
+
+            // 更新页面文本
+            function updateLanguage(lang) {
+                const texts = translations[lang];
+                document.title = texts.title;
+                document.querySelector('h1').textContent = texts.title;
+                document.querySelector('h1 + p').textContent = texts.subtitle;
+                document.querySelector('#mode-selector h2').textContent = texts.modeTitle;
+                document.querySelector('#btn-send-mode').textContent = texts.sendButton;
+                document.querySelector('#btn-receive-mode').textContent = texts.receiveButton;
+                document.querySelector('.upload-text').textContent = texts.uploadText;
+                document.querySelector('.upload-hint').textContent = texts.uploadHint;
+                document.querySelector('#add-more-files').innerHTML = `<i class="material-icons">add</i>${texts.addMoreFiles}`;
+                document.querySelector('#clear-all-files').innerHTML = `<i class="material-icons">clear_all</i>${texts.clearAll}`;
+                document.querySelector('.status-text h3').textContent = texts.shareTitle;
+                document.querySelector('.status-text p').textContent = texts.shareSubtitle;
+                document.querySelector('#copy-url').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${texts.copyLink}`;
+                document.querySelector('.verification-code label').textContent = texts.verificationCode;
+                document.querySelector('#copy-code').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.41421C20 6.88378 19.7893 6.37507 19.4142 6L16 2.58579C15.6249 2.21071 15.1162 2 14.5858 2H10C8.89543 2 8 2.89543 8 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${texts.copyCode}`;
+                document.querySelector('#verify-button').textContent = texts.verifyDownload;
+                document.querySelector('#file-info h3').textContent = texts.waitingFiles;
+                document.querySelector('#select-all').innerHTML = `<i class="material-icons">select_all</i>${texts.selectAll}`;
+                document.querySelector('#accept-selected').innerHTML = `<i class="material-icons">download</i>${texts.downloadSelected}`;
+                document.querySelector('#reject-all').innerHTML = `<i class="material-icons">close</i>${texts.cancel}`;
+                document.querySelector('#history-panel h2').textContent = texts.historyTitle;
+
+                // 更新按钮文本
+                languageText.textContent = lang.toUpperCase();
+                currentLanguage = lang;
+            }
+
+            // 切换语言
+            languageSwitcher.addEventListener('click', () => {
+                const newLang = currentLanguage === 'zh' ? 'en' : 'zh';
+                updateLanguage(newLang);
+            });
+
             // Mode selector functionality
             const modeSelector = document.getElementById('mode-selector');
             const sendPanel = document.getElementById('send-panel');
@@ -1092,11 +1592,12 @@
                 newFileInput.type = 'file';
                 newFileInput.id = 'file-input';
                 newFileInput.className = 'file-input';
+                newFileInput.multiple = true;
 
                 // 添加文件选择事件监听器
                 newFileInput.addEventListener('change', (e) => {
                     if (e.target.files.length > 0) {
-                        handleFileSelect(e.target.files[0]);
+                        handleFileSelect(e.target.files);
                     }
                 });
 
@@ -1105,7 +1606,7 @@
                 oldFileInput.parentNode.replaceChild(newFileInput, oldFileInput);
 
                 // 使用更可靠的方式触发文件选择对话框
-                        setTimeout(() => {
+                setTimeout(() => {
                     const clickEvent = new MouseEvent('click', {
                         view: window,
                         bubbles: true,
@@ -1154,22 +1655,22 @@
 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    handleFileSelect(files[0]);
+                    handleFileSelect(files);
                 }
             });
 
             // 处理文件选择
-            function handleFileSelect(file) {
+            function handleFileSelect(files) {
                 // 检查文件大小（100MB限制）
-                if (file.size > 100 * 1024 * 1024) {
+                if (files.length > 0 && files[0].size > 100 * 1024 * 1024) {
                     alert('文件大小不能超过100MB');
                     return;
                 }
 
-                window.fileToSend = file;
+                window.filesToSend = files;
 
                 // 更新文件预览
-                updateFilePreview(file);
+                updateFilesPreview(files);
 
                 // 显示连接信息
                 connectionInfo.classList.remove('hidden');
@@ -1227,45 +1728,76 @@
             // 文件输入事件监听
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    handleFileSelect(e.target.files[0]);
+                    handleFileSelect(e.target.files);
                 }
             });
 
             // 更新文件预览
-            function updateFilePreview(file) {
+            function updateFilesPreview(files) {
+                const filesPreview = document.getElementById('files-preview');
                 // 显示文件预览区域
-                filePreview.classList.remove('hidden');
+                filesPreview.classList.remove('hidden');
                 uploadArea.classList.add('hidden');
 
                 // 更新文件信息
-                previewFilename.textContent = file.name;
-                previewFilesize.textContent = formatFileSize(file.size);
+                const filesList = document.getElementById('files-list');
+                filesList.innerHTML = '';
+                Array.from(files).forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div class="file-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 15L16 10L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="file-info">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">${formatFileSize(file.size)}</span>
+                        </div>
+                        <div class="file-actions">
+                            <button class="remove-file secondary-btn" data-file="${file.name}">
+                                <i class="material-icons">delete</i>移除
+                            </button>
+                        </div>
+                    `;
+                    filesList.appendChild(fileItem);
 
-                // 根据文件类型显示不同的预览
-                if (file.type.startsWith('image/')) {
-                    // 图片预览
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        previewImage.src = e.target.result;
-                        previewImage.classList.remove('hidden');
-                        previewIcon.classList.add('hidden');
-                    };
-                    reader.readAsDataURL(file);
-            } else {
-                    // 其他文件类型显示图标
-                    previewImage.classList.add('hidden');
-                    previewIcon.classList.remove('hidden');
-                    previewIcon.innerHTML = getFileIcon(file.type);
-                }
+                    // 为移除按钮添加事件监听器
+                    const removeBtn = fileItem.querySelector('.remove-file');
+                    removeBtn.addEventListener('click', () => {
+                        // 从文件列表中移除该文件
+                        const newFiles = Array.from(window.filesToSend).filter(f => f.name !== file.name);
+                        if (newFiles.length === 0) {
+                            // 如果没有文件了，刷新页面
+                            window.location.reload();
+                        } else {
+                            // 更新文件列表
+                            window.filesToSend = newFiles;
+                            updateFilesPreview(newFiles);
+                            // 如果已经有连接，重新生成验证码
+                            if (window.peer) {
+                                generateShareInfo(window.peer.id);
+                            }
+                        }
+                    });
+                });
             }
 
-            // 移除文件
-            removeFileBtn.addEventListener('click', () => {
+            // 添加"添加更多文件"按钮事件监听
+            document.getElementById('add-more-files').addEventListener('click', () => {
+                createAndTriggerFileInput();
+            });
+
+            // 添加"清除所有"按钮事件监听
+            document.getElementById('clear-all-files').addEventListener('click', () => {
+                const filesPreview = document.getElementById('files-preview');
                 // 重置UI状态
-                filePreview.classList.add('hidden');
+                filesPreview.classList.add('hidden');
                 uploadArea.classList.remove('hidden');
                 connectionInfo.classList.add('hidden');
-                fileInput.value = '';
 
                 // 清理连接和状态
                 if (window.peer) {
@@ -1277,19 +1809,19 @@
                 }
 
                 // 清理文件相关状态
-                window.fileToSend = null;
+                window.filesToSend = null;
                 window.fileChunks = null;
                 window.currentChunk = 0;
                 window.totalChunks = 0;
 
-                // 清理验证码映射
-                if (window.verificationCode) {
-                    window.verificationCode = null;
-                }
+                // 刷新页面
+                window.location.reload();
+            });
 
-                // 返回到选择模式界面
-                sendPanel.classList.add('hidden');
-                modeSelector.classList.remove('hidden');
+            // 移除文件
+            removeFileBtn.addEventListener('click', () => {
+                // 刷新页面
+                window.location.reload();
             });
 
             // 格式化文件大小
@@ -1354,16 +1886,18 @@
                     showToast('连接已建立');
 
                     // 发送文件信息
-                    const file = window.fileToSend;
+                    const files = window.filesToSend;
                     conn.send({
                         type: 'file-info',
-                        name: file.name,
-                        size: file.size,
-                        fileType: file.type
+                        files: files.map(file => ({
+                            name: file.name,
+                            size: file.size,
+                            fileType: file.type
+                        }))
                     });
 
                     // 准备发送文件
-                    prepareFileTransfer(file);
+                    prepareFilesTransfer(files);
                 });
 
                 conn.on('data', (data) => {
@@ -1379,33 +1913,35 @@
                         if (isValid) {
                             showToast('验证成功');
                             // 发送文件信息
-                            const file = window.fileToSend;
+                            const files = window.filesToSend;
                             conn.send({
-                                    type: 'file-info',
-                                name: file.name,
-                                size: file.size,
-                                fileType: file.type
+                                type: 'file-info',
+                                files: files.map(file => ({
+                                    name: file.name,
+                                    size: file.size,
+                                    fileType: file.type
+                                }))
                             });
                             // 准备发送文件
-                            prepareFileTransfer(file);
+                            prepareFilesTransfer(files);
                         } else {
                             showToast('验证失败');
                             conn.close();
                         }
                     } else if (data.type === 'ready') {
                         // 开始发送文件
-                        startFileTransfer();
+                        startFilesTransfer();
                     }
-                        });
+                });
 
-                        conn.on('close', () => {
+                conn.on('close', () => {
                     console.log('Connection closed');
                     showToast('连接已关闭');
                 });
             }
 
             // 准备文件传输
-            function prepareFileTransfer(file) {
+            function prepareFilesTransfer(files) {
                 // 显示进度条
                 progressContainer.classList.remove('hidden');
                 progressInner.style.width = '0%';
@@ -1413,52 +1949,71 @@
 
                 // 将文件分割成块
                 const CHUNK_SIZE = 16384; // 16KB
-                window.fileChunks = [];
-                let offset = 0;
-
-                while (offset < file.size) {
-                    const chunk = file.slice(offset, offset + CHUNK_SIZE);
-                    window.fileChunks.push(chunk);
-                    offset += CHUNK_SIZE;
-                }
+                window.fileChunks = files.map(file => {
+                    const chunks = [];
+                    let offset = 0;
+                    while (offset < file.size) {
+                        const chunk = file.slice(offset, offset + CHUNK_SIZE);
+                        chunks.push(chunk);
+                        offset += CHUNK_SIZE;
+                    }
+                    return chunks;
+                });
 
                 window.currentChunk = 0;
-                window.totalChunks = window.fileChunks.length;
+                window.totalChunks = files.length;
             }
 
             // 开始文件传输
-            function startFileTransfer() {
+            function startFilesTransfer() {
                 if (!window.conn || !window.fileChunks) return;
 
-                const sendNextChunk = () => {
+                const sendNextFile = () => {
                     if (window.currentChunk < window.totalChunks) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            window.conn.send({
-                                type: 'file-chunk',
-                                data: e.target.result,
-                                chunk: window.currentChunk,
-                                total: window.totalChunks
-                            });
+                        const file = window.filesToSend[window.currentChunk];
+                        const chunks = window.fileChunks[window.currentChunk];
+                        const sendNextChunk = () => {
+                            if (window.currentChunk < window.totalChunks) {
+                                const chunk = chunks[window.currentChunk];
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    window.conn.send({
+                                        type: 'file-chunk',
+                                        data: e.target.result,
+                                        chunk: window.currentChunk,
+                                        total: window.totalChunks
+                                    });
 
-                            // 更新进度
-                            const progress = (window.currentChunk + 1) / window.totalChunks * 100;
-                            progressInner.style.width = progress + '%';
-                            progressText.textContent = `正在发送...${progress.toFixed(1)}%`;
+                                    // 更新进度
+                                    const progress = (window.currentChunk + 1) / window.totalChunks * 100;
+                                    progressInner.style.width = progress + '%';
+                                    progressText.textContent = `正在发送...${progress.toFixed(1)}%`;
 
-                            window.currentChunk++;
-                            sendNextChunk();
+                                    window.currentChunk++;
+                                    sendNextChunk();
+                                };
+                                reader.readAsArrayBuffer(chunk);
+                            } else {
+                                // 传输完成
+                                window.conn.send({ type: 'file-complete' });
+                                progressText.textContent = '发送完成';
+                                showToast('文件发送完成');
+                                // 添加发送历史记录
+                                addTransferHistory('send', window.filesToSend, 'success');
+                            }
                         };
-                        reader.readAsArrayBuffer(window.fileChunks[window.currentChunk]);
+                        sendNextChunk();
                     } else {
                         // 传输完成
                         window.conn.send({ type: 'file-complete' });
                         progressText.textContent = '发送完成';
                         showToast('文件发送完成');
+                        // 添加发送历史记录
+                        addTransferHistory('send', window.filesToSend, 'success');
                     }
                 };
 
-                sendNextChunk();
+                sendNextFile();
             }
 
             // 复制分享链接
@@ -1483,7 +2038,47 @@
                 });
             });
 
-            // 处理URL参数
+            // 添加开始下载和取消按钮的事件监听
+            document.getElementById('accept-selected').addEventListener('click', () => {
+                if (window.conn) {
+                    window.conn.send({ type: 'ready' });
+                    showToast('开始接收文件...');
+                }
+            });
+
+            document.getElementById('reject-all').addEventListener('click', () => {
+                if (window.conn) {
+                    window.conn.close();
+                }
+                // 刷新页面
+                window.location.reload();
+            });
+
+            // 添加显示提示消息的函数
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                toast.style.color = 'white';
+                toast.style.padding = '12px 24px';
+                toast.style.borderRadius = '8px';
+                toast.style.zIndex = '9999';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                // 3秒后移除提示
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            // 页面加载时处理URL参数
             function handleUrlParams() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const id = urlParams.get('id');
@@ -1593,14 +2188,14 @@
                             const progressText = document.querySelector('#file-info .progress-text');
                             progressText.textContent = '接收完成';
                             showToast('文件接收完成');
-
-                            // 清理接收状态
-                            window.receivedChunks = [];
-                            window.expectedChunks = 0;
+                            // 添加接收历史记录
+                            addTransferHistory('receive', window.receivedFiles, 'success');
                         } else {
                             const progressText = document.querySelector('#file-info .progress-text');
                             progressText.textContent = '接收失败：文件不完整';
                             showToast('文件接收失败：数据不完整');
+                            // 添加失败历史记录
+                            addTransferHistory('receive', window.receivedFiles, 'failed');
                         }
                     }
                 });
@@ -1615,37 +2210,6 @@
                     showToast('连接错误：' + err.message);
                 });
             }
-
-            // 添加开始下载和取消按钮的事件监听
-            document.getElementById('accept-file').addEventListener('click', () => {
-                if (window.conn) {
-                    window.conn.send({ type: 'ready' });
-                    showToast('开始接收文件...');
-                }
-            });
-
-            document.getElementById('reject-file').addEventListener('click', () => {
-                if (window.conn) {
-                    window.conn.close();
-                }
-                document.getElementById('file-info').classList.add('hidden');
-                document.getElementById('verification-input').value = '';
-                showToast('已取消接收');
-            });
-
-            // 添加显示提示消息的函数
-            function showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.textContent = message;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-            }
-
-            // 页面加载时处理URL参数
-            handleUrlParams();
 
             // 移动端检测函数
             function isMobile() {
@@ -1665,16 +2229,16 @@
             // 添加移动端提示信息
             function addMobileTips() {
                 const tipsHtml = `
-                    <div class="mobile-tips card" style="margin-bottom: 20px;">
-                        <h3 style="color: var(--primary-color);">使用提示</h3>
-                        <ul style="padding-left: 20px; margin: 10px 0;">
-                            <li>请保持页面在前台运行</li>
-                            <li>建议使用WiFi网络传输大文件</li>
-                            <li>传输过程中请勿切换应用或锁屏</li>
-                            ${isIOS() ? '<li>文件下载后需要手动保存到"文件"应用</li>' : ''}
-                            ${isWechat() ? '<li>建议使用系统自带浏览器以获得完整功能</li>' : ''}
-                        </ul>
-                    </div>`;
+                <div class="mobile-tips card" style="margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color);">使用提示</h3>
+                    <ul style="padding-left: 20px; margin: 10px 0;">
+                        <li>请保持页面在前台运行</li>
+                        <li>建议使用WiFi网络传输大文件</li>
+                        <li>传输过程中请勿切换应用或锁屏</li>
+                        ${isIOS() ? '<li>文件下载后需要手动保存到"文件"应用</li>' : ''}
+                        ${isWechat() ? '<li>建议使用系统自带浏览器以获得完整功能</li>' : ''}
+                    </ul>
+                </div>`;
                 document.querySelector('h1').insertAdjacentHTML('afterend', tipsHtml);
             }
 
@@ -1687,8 +2251,8 @@
                 const maxFileSize = isWechat() ? 20 * 1024 * 1024 : 100 * 1024 * 1024; // 微信内限制20MB，其他50MB
 
                 // 修改文件选择处理
-                function handleFileSelect(file) {
-                    if (file.size > maxFileSize) {
+                function handleFileSelect(files) {
+                    if (files.length > 0 && files[0].size > maxFileSize) {
                         showToast(`文件大小不能超过${maxFileSize / 1024 / 1024}MB`);
                         return;
                     }
@@ -1717,57 +2281,57 @@
                 // 优化移动端样式
                 const style = document.createElement('style');
                 style.textContent = `
-                    @media(max-width: 600px) {
-                        body {
-                            padding: 10px;
-                        }
-
-                        .card {
-                            padding: 15px;
-                        }
-
-                        .upload-area {
-                            min-height: 150px;
-                        }
-
-                        .verification-form {
-                            flex-direction: column;
-                        }
-
-                        .verification-form button {
-                            margin-top: 10px;
-                        }
-
-                        .copy-button {
-                            padding: 12px;
-                        }
-
-                        .mobile-tips {
-                            font-size: 14px;
-                            line-height: 1.5;
-                        }
-
-                        .mobile-tips li {
-                            margin-bottom: 8px;
-                        }
-
-                        /* 优化按钮触摸区域 */
-                        button, .btn {
-                            min-height: 44px;
-                            margin: 5px 0;
-                        }
-
-                        /* 优化文件信息显示 */
-                        .file-details {
-                            font-size: 14px;
-                        }
-
-                        /* 优化进度条显示 */
-                        .progress-bar {
-                            height: 8px;
-                        }
+                @media(max-width: 600px) {
+                    body {
+                        padding: 10px;
                     }
-                `;
+
+                    .card {
+                        padding: 15px;
+                    }
+
+                    .upload-area {
+                        min-height: 150px;
+                    }
+
+                    .verification-form {
+                        flex-direction: column;
+                    }
+
+                    .verification-form button {
+                        margin-top: 10px;
+                    }
+
+                    .copy-button {
+                        padding: 12px;
+                    }
+
+                    .mobile-tips {
+                        font-size: 14px;
+                        line-height: 1.5;
+                    }
+
+                    .mobile-tips li {
+                        margin-bottom: 8px;
+                    }
+
+                    /* 优化按钮触摸区域 */
+                    button, .btn {
+                        min-height: 44px;
+                        margin: 5px 0;
+                    }
+
+                    /* 优化文件信息显示 */
+                    .file-details {
+                        font-size: 14px;
+                    }
+
+                    /* 优化进度条显示 */
+                    .progress-bar {
+                        height: 8px;
+                    }
+                }
+            `;
                 document.head.appendChild(style);
 
                 // 优化文件保存
@@ -1792,6 +2356,171 @@
                     setTimeout(() => toast.remove(), 3000);
                 }
             }
+
+            // 添加历史记录管理
+            const historyManager = {
+                // 获取历史记录
+                getHistory() {
+                    const history = localStorage.getItem('transferHistory');
+                    return history ? JSON.parse(history) : [];
+                },
+
+                // 添加历史记录
+                addHistory(record) {
+                    const history = this.getHistory();
+                    history.unshift({
+                        ...record,
+                        timestamp: new Date().toISOString()
+                    });
+                    // 只保留最近50条记录
+                    if (history.length > 50) {
+                        history.pop();
+                    }
+                    localStorage.setItem('transferHistory', JSON.stringify(history));
+                    this.updateHistoryUI();
+                },
+
+                // 更新历史记录UI
+                updateHistoryUI() {
+                    const historyList = document.getElementById('history-list');
+                    const history = this.getHistory();
+
+                    historyList.innerHTML = history.map(record => `
+                        <div class="history-item">
+                            <div class="history-icon">
+                                ${record.type === 'send' ?
+                            '<i class="material-icons">upload</i>' :
+                            '<i class="material-icons">download</i>'}
+                            </div>
+                            <div class="history-content">
+                                <div class="history-header">
+                                    <span class="history-title">
+                                        ${record.type === 'send' ? '发送文件' : '接收文件'}
+                                    </span>
+                                    <span class="history-date">
+                                        ${this.formatDate(record.timestamp)}
+                                    </span>
+                                </div>
+                                <div class="history-files">
+                                    ${record.files.map(file =>
+                                `${file.name} (${formatFileSize(file.size)})`
+                            ).join('<br>')}
+                                </div>
+                                <span class="history-status ${record.status}">
+                                    ${this.getStatusText(record.status)}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                // 格式化日期
+                formatDate(timestamp) {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                },
+
+                // 获取状态文本
+                getStatusText(status) {
+                    const statusMap = {
+                        success: '成功',
+                        failed: '失败',
+                        pending: '进行中'
+                    };
+                    return statusMap[status] || status;
+                }
+            };
+
+            // 在文件传输完成时添加历史记录
+            function addTransferHistory(type, files, status) {
+                historyManager.addHistory({
+                    type,
+                    files: Array.from(files).map(file => ({
+                        name: file.name,
+                        size: file.size
+                    })),
+                    status
+                });
+            }
+
+            // 页面加载时更新历史记录UI
+            historyManager.updateHistoryUI();
+
+            // 添加返回按钮功能
+
+
+            document.getElementById('send-back-btn').addEventListener('click', function () {
+                console.log('Send back button clicked');
+
+                // 关闭现有的连接
+                if (window.conn) {
+                    window.conn.close();
+                }
+
+                // 销毁现有的 peer 连接
+                if (window.peer) {
+                    window.peer.destroy();
+                    window.peer = null;
+                }
+
+                // 清除所有状态
+                window.filesToSend = null;
+                window.fileChunks = null;
+                window.currentChunk = 0;
+                window.totalChunks = 0;
+
+                // 隐藏发送面板并显示模式选择面板
+                document.getElementById('send-panel').classList.add('hidden');
+                document.getElementById('mode-selector').classList.remove('hidden');
+
+                // 重置文件预览区域
+                const filesPreview = document.getElementById('files-preview');
+                const uploadArea = document.getElementById('upload-area');
+                if (filesPreview) {
+                    filesPreview.classList.add('hidden');
+                    if (uploadArea) uploadArea.classList.remove('hidden');
+                }
+
+                // 隐藏连接信息
+                const connectionInfo = document.getElementById('connection-info');
+                if (connectionInfo) connectionInfo.classList.add('hidden');
+
+                // 重置进度条
+                const progressBars = document.querySelectorAll('.progress-inner');
+                progressBars.forEach(bar => bar.style.width = '0%');
+
+                const progressTexts = document.querySelectorAll('.progress-text');
+                progressTexts.forEach(text => text.textContent = '');
+
+                // 显示提示消息
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                toast.style.color = 'white';
+                toast.style.padding = '12px 24px';
+                toast.style.borderRadius = '8px';
+                toast.style.zIndex = '9999';
+                toast.style.opacity = '1';
+                toast.textContent = '已返回初始界面';
+                document.body.appendChild(toast);
+
+                // 3秒后移除提示
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            });
         });
     </script>
 </body>
